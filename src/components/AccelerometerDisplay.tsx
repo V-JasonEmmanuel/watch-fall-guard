@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Watch, Wifi, WifiOff } from "lucide-react";
+import { Watch, Wifi, WifiOff, Activity } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface AccelerometerData {
   x: number;
@@ -15,147 +16,126 @@ interface AccelerometerDisplayProps {
 }
 
 export const AccelerometerDisplay = ({ data, isConnected }: AccelerometerDisplayProps) => {
-  const getFallRiskLevel = () => {
-    if (data.magnitude > 15) return { level: "HIGH", color: "text-destructive" };
-    if (data.magnitude > 12) return { level: "MEDIUM", color: "text-warning" };
-    return { level: "LOW", color: "text-success" };
+  const getFallRisk = () => {
+    if (data.magnitude > 15) return { level: "HIGH", color: "text-destructive", bg: "bg-destructive/10", border: "border-destructive/30" };
+    if (data.magnitude > 12) return { level: "MEDIUM", color: "text-warning", bg: "bg-warning/10", border: "border-warning/30" };
+    return { level: "LOW", color: "text-success", bg: "bg-success/10", border: "border-success/30" };
   };
 
-  const fallRisk = getFallRiskLevel();
+  const fallRisk = getFallRisk();
+
+  const axes = [
+    { label: "X-Axis", value: data.x, color: "text-health-heart", bg: "bg-health-heart/10" },
+    { label: "Y-Axis", value: data.y, color: "text-health-ecg", bg: "bg-health-ecg/10" },
+    { label: "Z-Axis", value: data.z, color: "text-health-spo2", bg: "bg-health-spo2/10" },
+  ];
 
   return (
-    <Card className="relative overflow-hidden bg-gradient-card border-0 shadow-large hover:shadow-success transition-all duration-300">
-      <div className="absolute inset-0 bg-gradient-success opacity-5"></div>
-      <CardHeader className="relative">
-        <CardTitle className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-success rounded-xl shadow-success">
-            <Watch className="w-5 h-5 text-white" />
-          </div>
-          <div className="flex-1">
-            <span className="text-xl font-bold bg-gradient-to-r from-medical-primary to-medical-secondary bg-clip-text text-transparent">
-              Samsung Galaxy Watch 5
-            </span>
-            <div className="flex items-center gap-2 mt-1">
-              {isConnected ? (
-                <Wifi className="w-4 h-4 text-medical-secondary" />
-              ) : (
-                <WifiOff className="w-4 h-4 text-medical-error" />
-              )}
-              <Badge variant={isConnected ? "default" : "destructive"} className={isConnected ? "bg-medical-secondary text-white" : ""}>
-                {isConnected ? "Connected" : "Disconnected"}
-              </Badge>
+    <Card className="border-0 shadow-large bg-card/80 backdrop-blur-sm overflow-hidden">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-gradient-success rounded-xl shadow-glow-success">
+              <Watch className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <div>
+              <span className="text-lg font-display">Accelerometer</span>
+              <p className="text-xs text-muted-foreground font-normal">Galaxy Watch 5</p>
             </div>
           </div>
+          
+          <Badge 
+            variant="outline" 
+            className={cn(
+              "text-xs",
+              isConnected 
+                ? "bg-success/10 text-success border-success/30" 
+                : "bg-destructive/10 text-destructive border-destructive/30"
+            )}
+          >
+            {isConnected ? <Wifi className="w-3 h-3 mr-1" /> : <WifiOff className="w-3 h-3 mr-1" />}
+            {isConnected ? "Live" : "Offline"}
+          </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="relative space-y-6">
-        {/* Real-time Data Visualization */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="text-center p-4 bg-medical-surface rounded-xl border border-medical-primary/20 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-medical opacity-0 group-hover:opacity-10 transition-opacity"></div>
-            <div className="relative">
-              <div className="text-xs font-medium text-medical-primary uppercase tracking-wide mb-2">X-Axis</div>
-              <div className="text-2xl font-bold text-foreground mb-1">
-                {data.x.toFixed(2)}
-              </div>
-              <div className="text-xs text-foreground/50">g-force</div>
+
+      <CardContent className="space-y-4">
+        {/* Axis Values */}
+        <div className="grid grid-cols-3 gap-3">
+          {axes.map((axis) => (
+            <div key={axis.label} className={cn("p-3 rounded-xl text-center", axis.bg)}>
+              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">{axis.label}</p>
+              <p className={cn("text-xl font-bold font-display", axis.color)}>
+                {axis.value.toFixed(2)}
+              </p>
+              <p className="text-[10px] text-muted-foreground">g-force</p>
             </div>
-          </div>
-          
-          <div className="text-center p-4 bg-medical-surface rounded-xl border border-medical-secondary/20 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-success opacity-0 group-hover:opacity-10 transition-opacity"></div>
-            <div className="relative">
-              <div className="text-xs font-medium text-medical-secondary uppercase tracking-wide mb-2">Y-Axis</div>
-              <div className="text-2xl font-bold text-foreground mb-1">
-                {data.y.toFixed(2)}
-              </div>
-              <div className="text-xs text-foreground/50">g-force</div>
-            </div>
-          </div>
-          
-          <div className="text-center p-4 bg-medical-surface rounded-xl border border-medical-accent/20 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-r from-medical-accent/10 to-medical-accent/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div className="relative">
-              <div className="text-xs font-medium text-medical-accent uppercase tracking-wide mb-2">Z-Axis</div>
-              <div className="text-2xl font-bold text-foreground mb-1">
-                {data.z.toFixed(2)}
-              </div>
-              <div className="text-xs text-foreground/50">g-force</div>
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* Total Acceleration Display */}
-        <div className="p-6 bg-medical-surface rounded-xl border border-medical-primary/20">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-medium text-foreground/70">Total Acceleration:</span>
+        {/* Total Magnitude */}
+        <div className={cn("p-4 rounded-xl border", fallRisk.bg, fallRisk.border)}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Activity className={cn("w-5 h-5", fallRisk.color)} />
+              <span className="text-sm font-medium">Total Acceleration</span>
+            </div>
             <div className="text-right">
-              <div className="text-3xl font-bold text-medical-primary">
+              <p className={cn("text-2xl font-bold font-display", fallRisk.color)}>
                 {data.magnitude.toFixed(2)}g
-              </div>
-              <Badge className={`mt-1 ${fallRisk.color} font-semibold`}>
-                {fallRisk.level} RISK
-              </Badge>
+              </p>
             </div>
           </div>
           
-          {/* Advanced Threshold Visualization */}
-          <div className="space-y-3">
-            <div className="flex justify-between text-sm text-foreground/60">
-              <span>Fall Detection Threshold</span>
-              <span className="font-mono">2.5g</span>
-            </div>
-            <div className="relative w-full h-4 bg-muted rounded-full overflow-hidden">
-              {/* Background gradient */}
-              <div className="absolute inset-0 bg-gradient-to-r from-medical-secondary via-warning to-medical-error"></div>
-              
-              {/* Current value indicator */}
-              <div 
-                className="absolute top-0 h-full bg-white rounded-full transition-all duration-300 shadow-medium"
-                style={{ 
-                  width: '4px',
-                  left: `${Math.min((data.magnitude / 20) * 100, 96)}%`,
-                  filter: 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.6))'
-                }}
-              ></div>
-              
-              {/* Threshold line */}
-              <div 
-                className="absolute top-0 w-0.5 h-full bg-medical-error shadow-danger"
-                style={{ left: '12.5%' }}
-              ></div>
-              
-              {/* Labels */}
-              <div className="absolute -bottom-6 left-0 text-xs text-medical-secondary font-medium">0g</div>
-              <div className="absolute -bottom-6 text-xs text-medical-error font-medium" style={{ left: '12.5%' }}>2.5g</div>
-              <div className="absolute -bottom-6 right-0 text-xs text-foreground/50">20g</div>
-            </div>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Fall Risk Level</span>
+            <Badge className={cn("font-semibold", fallRisk.bg, fallRisk.color, "border", fallRisk.border)}>
+              {fallRisk.level}
+            </Badge>
           </div>
         </div>
 
-        {/* Technical Information */}
-        <div className="p-4 bg-medical-surface rounded-xl">
-          <h4 className="text-sm font-semibold text-foreground/70 mb-3">Device Information</h4>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-medical-secondary rounded-full animate-pulse"></div>
-                <span className="text-foreground/60">Samsung Health SDK</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-medical-primary rounded-full animate-pulse" style={{ animationDelay: '0.3s' }}></div>
-                <span className="text-foreground/60">Real-time Sensor Data</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-medical-accent rounded-full animate-pulse" style={{ animationDelay: '0.6s' }}></div>
-                <span className="text-foreground/60">Fall Detection Active</span>
-              </div>
-            </div>
-            <div className="space-y-2 text-foreground/50">
-              <div>• Sampling Rate: 50Hz</div>
-              <div>• Sensitivity: High</div>
-              <div>• Battery: Optimized</div>
-            </div>
+        {/* Threshold Visualization */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>Fall Detection Threshold</span>
+            <span className="font-mono">2.5g</span>
+          </div>
+          <div className="relative h-3 bg-muted rounded-full overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-success via-warning to-destructive opacity-30" />
+            <div 
+              className="absolute top-0 h-full w-1 bg-foreground rounded-full shadow-lg transition-all duration-300"
+              style={{ left: `${Math.min((data.magnitude / 20) * 100, 98)}%` }}
+            />
+            <div 
+              className="absolute top-0 h-full w-px bg-destructive"
+              style={{ left: '12.5%' }}
+            />
+          </div>
+          <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
+            <span>0g</span>
+            <span className="text-destructive">2.5g</span>
+            <span>20g</span>
+          </div>
+        </div>
+
+        {/* Device Info */}
+        <div className="grid grid-cols-2 gap-2 pt-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 bg-success rounded-full animate-pulse" />
+            50Hz Sampling
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 bg-success rounded-full animate-pulse" style={{ animationDelay: '0.3s' }} />
+            High Sensitivity
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 bg-success rounded-full animate-pulse" style={{ animationDelay: '0.6s' }} />
+            Fall Detection On
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 bg-success rounded-full animate-pulse" style={{ animationDelay: '0.9s' }} />
+            Battery Optimized
           </div>
         </div>
       </CardContent>

@@ -1,8 +1,21 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Monitor, Shield, Phone, Settings } from "lucide-react";
+import { 
+  Monitor, 
+  Shield, 
+  Phone, 
+  Heart,
+  Watch,
+  Camera,
+  Activity,
+  ArrowRight,
+  CheckCircle,
+  Zap,
+  Cloud,
+  Bell
+} from "lucide-react";
 import { Dashboard } from "@/components/Dashboard";
 
 const Index = () => {
@@ -12,220 +25,192 @@ const Index = () => {
     return <Dashboard />;
   }
 
+  const features = [
+    {
+      icon: Camera,
+      title: "AI Vision Detection",
+      description: "MediaPipe Pose analyzes posture in real-time with 95%+ accuracy",
+      gradient: "from-primary to-primary/70",
+    },
+    {
+      icon: Watch,
+      title: "Samsung Watch 5",
+      description: "Precision accelerometer with 2.5g fall threshold detection",
+      gradient: "from-success to-success/70",
+    },
+    {
+      icon: Heart,
+      title: "Health Monitoring",
+      description: "Heart rate, BP, SpO2, ECG, temperature & stress tracking",
+      gradient: "from-health-heart to-health-heart/70",
+    },
+    {
+      icon: Bell,
+      title: "Instant Alerts",
+      description: "WhatsApp notifications to family, caregivers & doctors",
+      gradient: "from-warning to-warning/70",
+    },
+  ];
+
+  const healthMetrics = [
+    { name: "Heart Rate", icon: Heart, color: "text-health-heart" },
+    { name: "Blood Pressure", icon: Activity, color: "text-health-bp" },
+    { name: "SpO2", icon: Zap, color: "text-health-spo2" },
+    { name: "ECG", icon: Activity, color: "text-health-ecg" },
+  ];
+
+  const stats = [
+    { value: "95%", label: "Detection Accuracy" },
+    { value: "<3s", label: "Alert Response" },
+    { value: "24/7", label: "Monitoring" },
+    { value: "6+", label: "Health Metrics" },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-hero relative overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-medical-primary opacity-10 animate-float"></div>
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-medical-accent opacity-10 animate-float" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-medical-secondary opacity-5 animate-pulse-slow"></div>
-      </div>
+    <div className="min-h-screen bg-gradient-hero bg-gradient-mesh">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden">
+        {/* Floating elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-primary/10 blur-3xl animate-float" />
+          <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-success/10 blur-3xl animate-float" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-1/3 left-1/4 w-40 h-40 rounded-full bg-medical-accent/10 blur-3xl animate-pulse-slow" />
+        </div>
 
-      <div className="relative container mx-auto px-6 py-16">
-        {/* Header Section */}
-        <div className="text-center mb-20">
-          <div className="flex items-center justify-center gap-4 mb-8">
-            <div className="relative p-4 bg-gradient-medical rounded-2xl shadow-glow animate-glow">
-              <Shield className="w-12 h-12 text-white" />
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-medical-secondary rounded-full animate-pulse"></div>
-            </div>
+        <div className="container mx-auto px-4 pt-20 pb-16 relative">
+          {/* Header Badge */}
+          <div className="flex justify-center mb-8">
+            <Badge variant="outline" className="px-4 py-2 text-sm bg-card/80 backdrop-blur-sm border-border/50 shadow-soft">
+              <Shield className="w-4 h-4 mr-2 text-primary" />
+              Intelligent Elder Care Protection
+            </Badge>
           </div>
-          
-          <h1 className="text-7xl font-bold bg-gradient-to-r from-medical-primary to-medical-accent bg-clip-text text-transparent mb-6 leading-tight">
-            ElderGuard
-          </h1>
-          
-          <div className="relative">
-            <p className="text-2xl text-foreground/80 max-w-3xl mx-auto leading-relaxed mb-8">
-              Revolutionary fall detection system combining 
-              <span className="text-medical-primary font-semibold"> AI-powered computer vision</span> and 
-              <span className="text-medical-accent font-semibold"> Samsung Galaxy Watch</span> sensors
+
+          {/* Main Title */}
+          <div className="text-center max-w-4xl mx-auto mb-12">
+            <div className="flex justify-center mb-6">
+              <div className="relative p-4 bg-gradient-medical rounded-2xl shadow-glow">
+                <Shield className="w-12 h-12 text-primary-foreground" />
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-success rounded-full animate-pulse border-2 border-card" />
+              </div>
+            </div>
+            
+            <h1 className="text-5xl md:text-7xl font-bold font-display mb-6">
+              <span className="text-gradient">ElderGuard</span>
+            </h1>
+            
+            <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+              Revolutionary fall detection combining{" "}
+              <span className="text-primary font-medium">AI-powered vision</span>,{" "}
+              <span className="text-success font-medium">Samsung Watch sensors</span>, and{" "}
+              <span className="text-health-heart font-medium">health monitoring</span>
             </p>
-            <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-gradient-medical rounded-full"></div>
           </div>
-          
-          <div className="flex items-center justify-center gap-8 mt-12">
-            <div className="flex items-center gap-2 px-4 py-2 bg-white/50 rounded-full backdrop-blur-sm">
-              <div className="w-2 h-2 bg-medical-secondary rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-foreground/70">Real-time Monitoring</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-white/50 rounded-full backdrop-blur-sm">
-              <div className="w-2 h-2 bg-medical-primary rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
-              <span className="text-sm font-medium text-foreground/70">Instant Alerts</span>
-            </div>
+
+          {/* Health Metrics Pills */}
+          <div className="flex flex-wrap justify-center gap-3 mb-12">
+            {healthMetrics.map((metric, i) => (
+              <div 
+                key={i}
+                className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm rounded-full border border-border/50 shadow-soft"
+              >
+                <metric.icon className={`w-4 h-4 ${metric.color}`} />
+                <span className="text-sm font-medium">{metric.name}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA Button */}
+          <div className="flex justify-center mb-16">
+            <Button 
+              onClick={() => setActiveView("dashboard")}
+              size="lg"
+              className="group px-8 py-6 text-lg font-semibold bg-gradient-medical text-primary-foreground shadow-glow hover:shadow-large transition-all duration-300 hover:scale-105"
+            >
+              Launch Dashboard
+              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
+            {stats.map((stat, i) => (
+              <div key={i} className="text-center">
+                <p className="text-3xl md:text-4xl font-bold font-display text-foreground mb-1">{stat.value}</p>
+                <p className="text-sm text-muted-foreground">{stat.label}</p>
+              </div>
+            ))}
           </div>
         </div>
+      </section>
 
-        {/* Feature Showcase */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-20">
-          <Card className="group relative overflow-hidden bg-gradient-card backdrop-blur-sm border-0 shadow-large hover:shadow-glow transition-all duration-500 hover:-translate-y-2">
-            <div className="absolute inset-0 bg-gradient-medical opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
-            <CardHeader className="relative">
-              <div className="w-16 h-16 bg-gradient-medical rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <Monitor className="w-8 h-8 text-white" />
-              </div>
-              <CardTitle className="text-2xl text-foreground group-hover:text-medical-primary transition-colors">
-                Computer Vision
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="relative">
-              <p className="text-foreground/70 text-lg leading-relaxed mb-6">
-                Advanced MediaPipe Pose detection analyzes posture changes in real-time, identifying fall patterns with 95%+ accuracy.
-              </p>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-medical-secondary rounded-full"></div>
-                  <span className="text-sm text-foreground/60">Real-time pose analysis</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-medical-secondary rounded-full"></div>
-                  <span className="text-sm text-foreground/60">Fall pattern recognition</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-medical-secondary rounded-full"></div>
-                  <span className="text-sm text-foreground/60">Privacy-first processing</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Features Section */}
+      <section className="py-20 bg-card/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <Badge variant="secondary" className="mb-4">Features</Badge>
+            <h2 className="text-3xl md:text-4xl font-bold font-display mb-4">
+              Comprehensive Protection System
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Multi-sensor fusion technology for accurate fall detection and health monitoring
+            </p>
+          </div>
 
-          <Card className="group relative overflow-hidden bg-gradient-card backdrop-blur-sm border-0 shadow-large hover:shadow-success transition-all duration-500 hover:-translate-y-2">
-            <div className="absolute inset-0 bg-gradient-success opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
-            <CardHeader className="relative">
-              <div className="w-16 h-16 bg-gradient-success rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <Shield className="w-8 h-8 text-white" />
-              </div>
-              <CardTitle className="text-2xl text-foreground group-hover:text-medical-secondary transition-colors">
-                Samsung Watch 5
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="relative">
-              <p className="text-foreground/70 text-lg leading-relaxed mb-6">
-                Precision accelerometer monitoring detects sudden impacts and movement patterns using Samsung Health SDK integration.
-              </p>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-medical-primary rounded-full"></div>
-                  <span className="text-sm text-foreground/60">2.5g fall threshold</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-medical-primary rounded-full"></div>
-                  <span className="text-sm text-foreground/60">Motion analysis</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-medical-primary rounded-full"></div>
-                  <span className="text-sm text-foreground/60">Battery optimization</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {features.map((feature, i) => (
+              <Card 
+                key={i} 
+                className="group border-0 shadow-medium hover:shadow-large transition-all duration-300 hover:-translate-y-1 bg-card/80 backdrop-blur-sm overflow-hidden"
+              >
+                <CardContent className="p-6">
+                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-soft`}>
+                    <feature.icon className="w-7 h-7 text-primary-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold font-display mb-2">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground">{feature.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
 
-          <Card className="group relative overflow-hidden bg-gradient-card backdrop-blur-sm border-0 shadow-large hover:shadow-danger transition-all duration-500 hover:-translate-y-2">
-            <div className="absolute inset-0 bg-gradient-danger opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
-            <CardHeader className="relative">
-              <div className="w-16 h-16 bg-gradient-danger rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <Phone className="w-8 h-8 text-white" />
-              </div>
-              <CardTitle className="text-2xl text-foreground group-hover:text-medical-error transition-colors">
-                Instant Alerts
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="relative">
-              <p className="text-foreground/70 text-lg leading-relaxed mb-6">
-                Immediate WhatsApp notifications to family, caregivers, and medical professionals when falls are detected.
-              </p>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-medical-accent rounded-full"></div>
-                  <span className="text-sm text-foreground/60">Multi-contact alerts</span>
+      {/* Backend Notice */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <Card className="border border-dashed border-border bg-muted/30 overflow-hidden">
+            <CardContent className="p-8">
+              <div className="flex flex-col md:flex-row items-start gap-6">
+                <div className="p-4 bg-primary/10 rounded-xl">
+                  <Cloud className="w-8 h-8 text-primary" />
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-medical-accent rounded-full"></div>
-                  <span className="text-sm text-foreground/60">Location sharing</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-medical-accent rounded-full"></div>
-                  <span className="text-sm text-foreground/60">Emergency escalation</span>
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold font-display mb-2">Backend Integration Available</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Connect to Lovable Cloud to unlock full functionality including real-time alerts, persistent data storage, and Samsung Health SDK integration.
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {["WhatsApp API", "Cloud Storage", "User Auth", "Analytics"].map((item, i) => (
+                      <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <CheckCircle className="w-4 h-4 text-success" />
+                        {item}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
+      </section>
 
-        {/* CTA Section */}
-        <div className="text-center mb-16">
-          <Button 
-            onClick={() => setActiveView("dashboard")}
-            size="lg"
-            className="relative px-12 py-6 text-xl font-semibold bg-gradient-medical text-white border-0 shadow-glow hover:shadow-large transition-all duration-300 hover:scale-105 group overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12"></div>
-            <span className="relative flex items-center gap-3">
-              Launch Monitoring Dashboard
-              <Monitor className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
-            </span>
-          </Button>
-          
-          <p className="text-foreground/60 mt-6 text-lg">
-            Experience the future of elderly care monitoring
-          </p>
+      {/* Footer */}
+      <footer className="py-8 border-t border-border/50">
+        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
+          <p>ElderGuard — Intelligent Fall Detection & Health Monitoring System</p>
         </div>
-
-        {/* Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-16">
-          <div className="text-center">
-            <div className="text-4xl font-bold text-medical-primary mb-2">95%</div>
-            <div className="text-foreground/60">Accuracy Rate</div>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-medical-secondary mb-2">&lt;5s</div>
-            <div className="text-foreground/60">Alert Time</div>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-medical-accent mb-2">24/7</div>
-            <div className="text-foreground/60">Monitoring</div>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-medical-error mb-2">0</div>
-            <div className="text-foreground/60">False Positives</div>
-          </div>
-        </div>
-
-        {/* Backend Notice */}
-        <Card className="relative overflow-hidden bg-gradient-to-r from-warning/10 to-warning/5 border border-warning/20 backdrop-blur-sm">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-warning/20 rounded-full flex items-center justify-center flex-shrink-0">
-                <Settings className="w-6 h-6 text-warning" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-semibold text-warning mb-3">Backend Integration Available</h3>
-                <p className="text-foreground/70 text-lg leading-relaxed mb-4">
-                  Connect Supabase to unlock the full potential of ElderGuard with real-time alerts, persistent data storage, and multi-user support.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-foreground/60">
-                  <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-warning rounded-full"></div>
-                    <span>WhatsApp API integration</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-warning rounded-full"></div>
-                    <span>Cloud data storage</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-warning rounded-full"></div>
-                    <span>User authentication</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-warning rounded-full"></div>
-                    <span>Analytics dashboard</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      </footer>
     </div>
   );
 };
