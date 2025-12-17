@@ -24,7 +24,11 @@ import {
   Building2,
   Droplets,
   Wind,
-  Brain
+  Brain,
+  Shield,
+  AlertTriangle,
+  MapPinOff,
+  Circle
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -39,11 +43,21 @@ interface Medication {
   nextDose?: string;
 }
 
+interface Geofence {
+  id: string;
+  name: string;
+  type: "safe" | "warning" | "danger";
+  radius: number; // meters
+  isInside: boolean;
+}
+
 interface Location {
   current: string;
   lastUpdated: string;
   type: "home" | "outdoor" | "building";
   coordinates?: { lat: number; lng: number };
+  geofenceStatus: "safe" | "warning" | "danger";
+  geofences: Geofence[];
 }
 
 interface ElderlyProfile {
@@ -92,7 +106,17 @@ const Profiles = () => {
         { id: "3", name: "Aspirin", dosage: "81mg", time: "12:00 PM", taken: false, nextDose: "in 2 hours" },
         { id: "4", name: "Metformin", dosage: "500mg", time: "06:00 PM", taken: false, nextDose: "in 8 hours" },
       ],
-      location: { current: "Living Room", lastUpdated: "2 min ago", type: "home" },
+      location: { 
+        current: "Living Room", 
+        lastUpdated: "2 min ago", 
+        type: "home",
+        geofenceStatus: "safe",
+        geofences: [
+          { id: "1", name: "Home Zone", type: "safe", radius: 100, isInside: true },
+          { id: "2", name: "Neighborhood", type: "warning", radius: 500, isInside: true },
+          { id: "3", name: "City Boundary", type: "danger", radius: 5000, isInside: true },
+        ]
+      },
     },
     {
       id: "2",
@@ -101,12 +125,12 @@ const Profiles = () => {
       room: "Room 102",
       status: "resting",
       lastCheckIn: "15 min ago",
-      heartRate: 68,
-      temperature: 98.2,
-      bloodPressure: "135/85",
-      spo2: 97,
+      heartRate: 110,
+      temperature: 99.8,
+      bloodPressure: "145/95",
+      spo2: 93,
       respiratoryRate: 14,
-      stressLevel: 15,
+      stressLevel: 65,
       conditions: ["Arthritis", "Heart Condition"],
       emergencyContact: "+1 (555) 234-5678",
       medications: [
@@ -114,14 +138,23 @@ const Profiles = () => {
         { id: "2", name: "Atorvastatin", dosage: "20mg", time: "09:00 PM", taken: false, nextDose: "in 11 hours" },
         { id: "3", name: "Ibuprofen", dosage: "400mg", time: "As needed", taken: false },
       ],
-      location: { current: "Bedroom", lastUpdated: "15 min ago", type: "home" },
+      location: { 
+        current: "Bedroom", 
+        lastUpdated: "15 min ago", 
+        type: "home",
+        geofenceStatus: "safe",
+        geofences: [
+          { id: "1", name: "Home Zone", type: "safe", radius: 100, isInside: true },
+          { id: "2", name: "Neighborhood", type: "warning", radius: 500, isInside: true },
+        ]
+      },
     },
     {
       id: "3",
       name: "Robert Williams",
       age: 75,
       room: "Room 103",
-      status: "active",
+      status: "alert",
       lastCheckIn: "2 min ago",
       heartRate: 76,
       temperature: 98.6,
@@ -136,15 +169,25 @@ const Profiles = () => {
         { id: "2", name: "Tiotropium", dosage: "18mcg", time: "08:00 AM", taken: true },
         { id: "3", name: "Prednisone", dosage: "10mg", time: "08:00 AM", taken: true },
       ],
-      location: { current: "Garden", lastUpdated: "1 min ago", type: "outdoor" },
+      location: { 
+        current: "Park (Outside Zone)", 
+        lastUpdated: "1 min ago", 
+        type: "outdoor",
+        geofenceStatus: "warning",
+        geofences: [
+          { id: "1", name: "Home Zone", type: "safe", radius: 100, isInside: false },
+          { id: "2", name: "Neighborhood", type: "warning", radius: 500, isInside: true },
+          { id: "3", name: "City Boundary", type: "danger", radius: 5000, isInside: true },
+        ]
+      },
     },
   ]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "active": return "bg-foreground text-background";
+      case "active": return "bg-emerald-500 text-white";
       case "resting": return "bg-muted text-foreground";
-      case "alert": return "bg-foreground text-background";
+      case "alert": return "bg-red-500 text-white";
       default: return "bg-muted text-muted-foreground";
     }
   };
@@ -155,6 +198,15 @@ const Profiles = () => {
       case "outdoor": return Navigation;
       case "building": return Building2;
       default: return MapPin;
+    }
+  };
+
+  const getGeofenceStatusColor = (status: string) => {
+    switch (status) {
+      case "safe": return { bg: "bg-emerald-500/10", text: "text-emerald-500", border: "border-emerald-500/30" };
+      case "warning": return { bg: "bg-amber-500/10", text: "text-amber-500", border: "border-amber-500/30" };
+      case "danger": return { bg: "bg-red-500/10", text: "text-red-500", border: "border-red-500/30" };
+      default: return { bg: "bg-muted", text: "text-muted-foreground", border: "border-border" };
     }
   };
 
@@ -180,12 +232,46 @@ const Profiles = () => {
   const takenMeds = selectedPerson?.medications.filter(m => m.taken).length || 0;
   const totalMeds = selectedPerson?.medications.length || 0;
 
-  const isVitalCritical = (type: string, value: number | string) => {
-    if (type === "heartRate") return (value as number) > 100 || (value as number) < 60;
-    if (type === "spo2") return (value as number) < 95;
-    if (type === "temperature") return (value as number) > 99.5 || (value as number) < 97;
-    if (type === "stress") return (value as number) > 70;
-    return false;
+  const getVitalStatus = (type: string, value: number | string): "safe" | "warning" | "danger" => {
+    if (type === "heartRate") {
+      const v = value as number;
+      if (v >= 60 && v <= 100) return "safe";
+      if (v >= 50 && v < 60 || v > 100 && v <= 110) return "warning";
+      return "danger";
+    }
+    if (type === "spo2") {
+      const v = value as number;
+      if (v >= 95) return "safe";
+      if (v >= 90 && v < 95) return "warning";
+      return "danger";
+    }
+    if (type === "temperature") {
+      const v = value as number;
+      if (v >= 97 && v <= 99) return "safe";
+      if (v >= 96 && v < 97 || v > 99 && v <= 100) return "warning";
+      return "danger";
+    }
+    if (type === "stress") {
+      const v = value as number;
+      if (v <= 40) return "safe";
+      if (v > 40 && v <= 70) return "warning";
+      return "danger";
+    }
+    if (type === "respiratory") {
+      const v = value as number;
+      if (v >= 12 && v <= 20) return "safe";
+      if (v >= 10 && v < 12 || v > 20 && v <= 25) return "warning";
+      return "danger";
+    }
+    return "safe";
+  };
+
+  const getVitalColor = (status: "safe" | "warning" | "danger") => {
+    switch (status) {
+      case "safe": return { bg: "bg-emerald-500/10", text: "text-emerald-600", border: "border-emerald-500/30", icon: "text-emerald-500" };
+      case "warning": return { bg: "bg-amber-500/10", text: "text-amber-600", border: "border-amber-500/30", icon: "text-amber-500" };
+      case "danger": return { bg: "bg-red-500/10", text: "text-red-600", border: "border-red-500/30", icon: "text-red-500" };
+    }
   };
 
   return (
@@ -220,47 +306,54 @@ const Profiles = () => {
           {/* Profiles List */}
           <div className="space-y-4">
             <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">All Profiles</p>
-            {profiles.map((profile) => (
-              <div 
-                key={profile.id}
-                className={cn(
-                  "p-4 border border-border rounded-lg cursor-pointer transition-all hover-lift",
-                  selectedProfile === profile.id && "ring-1 ring-foreground"
-                )}
-                onClick={() => setSelectedProfile(profile.id)}
-              >
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-12 w-12 border border-border">
-                    <AvatarFallback className="bg-muted text-sm font-medium">
-                      {profile.name.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <h3 className="font-medium truncate">{profile.name}</h3>
-                      <Badge className={cn("text-xs shrink-0", getStatusColor(profile.status))}>
-                        {profile.status}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{profile.age} yrs • {profile.room}</p>
-                    <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Heart className="w-3 h-3" />
-                        {profile.heartRate}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Pill className="w-3 h-3" />
-                        {profile.medications.filter(m => m.taken).length}/{profile.medications.length}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
-                        {profile.location.current}
-                      </span>
+            {profiles.map((profile) => {
+              const hrStatus = getVitalStatus("heartRate", profile.heartRate);
+              const geoStatus = profile.location.geofenceStatus;
+              return (
+                <div 
+                  key={profile.id}
+                  className={cn(
+                    "p-4 border rounded-lg cursor-pointer transition-all hover-lift",
+                    selectedProfile === profile.id && "ring-1 ring-foreground",
+                    geoStatus === "danger" && "border-red-500/50",
+                    geoStatus === "warning" && "border-amber-500/50",
+                    geoStatus === "safe" && "border-border"
+                  )}
+                  onClick={() => setSelectedProfile(profile.id)}
+                >
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-12 w-12 border border-border">
+                      <AvatarFallback className="bg-muted text-sm font-medium">
+                        {profile.name.split(' ').map(n => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="font-medium truncate">{profile.name}</h3>
+                        <Badge className={cn("text-xs shrink-0", getStatusColor(profile.status))}>
+                          {profile.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{profile.age} yrs • {profile.room}</p>
+                      <div className="flex items-center gap-3 mt-1.5 text-xs">
+                        <span className={cn("flex items-center gap-1", getVitalColor(hrStatus).text)}>
+                          <Heart className="w-3 h-3" />
+                          {profile.heartRate}
+                        </span>
+                        <span className="flex items-center gap-1 text-muted-foreground">
+                          <Pill className="w-3 h-3" />
+                          {profile.medications.filter(m => m.taken).length}/{profile.medications.length}
+                        </span>
+                        <span className={cn("flex items-center gap-1", getGeofenceStatusColor(geoStatus).text)}>
+                          <MapPin className="w-3 h-3" />
+                          {profile.location.current}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Profile Details */}
@@ -310,48 +403,111 @@ const Profiles = () => {
                       { label: "Temperature", value: `${selectedPerson.temperature}`, unit: "°F", icon: Thermometer, type: "temperature" },
                       { label: "Respiratory", value: `${selectedPerson.respiratoryRate}`, unit: "/min", icon: Wind, type: "respiratory" },
                       { label: "Stress Level", value: `${selectedPerson.stressLevel}`, unit: "%", icon: Brain, type: "stress" },
-                    ].map((vital, i) => (
-                      <div key={i} className={cn(
-                        "p-4 border border-border rounded-lg",
-                        isVitalCritical(vital.type, vital.type === "bp" ? 0 : parseFloat(vital.value)) && "border-foreground bg-muted/50"
-                      )}>
-                        <div className="flex items-center gap-2 mb-2">
-                          <vital.icon className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">{vital.label}</span>
+                    ].map((vital, i) => {
+                      const status = vital.type === "bp" ? "safe" : getVitalStatus(vital.type, parseFloat(vital.value));
+                      const colors = getVitalColor(status);
+                      return (
+                        <div key={i} className={cn(
+                          "p-4 border rounded-lg transition-all",
+                          colors.bg, colors.border
+                        )}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <vital.icon className={cn("w-4 h-4", colors.icon)} />
+                            <span className="text-xs text-muted-foreground">{vital.label}</span>
+                            {status !== "safe" && (
+                              <AlertTriangle className={cn("w-3 h-3 ml-auto", colors.icon)} />
+                            )}
+                          </div>
+                          <p className={cn("text-xl font-semibold", colors.text)}>
+                            {vital.value}
+                            <span className="text-sm font-normal text-muted-foreground ml-1">{vital.unit}</span>
+                          </p>
+                          <p className={cn("text-xs mt-1 capitalize", colors.text)}>{status}</p>
                         </div>
-                        <p className="text-xl font-semibold">
-                          {vital.value}
-                          <span className="text-sm font-normal text-muted-foreground ml-1">{vital.unit}</span>
-                        </p>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* Location Tracking */}
+                {/* Geofencing & Location */}
                 <div className="p-6 border border-border rounded-lg">
                   <div className="flex items-center justify-between mb-4">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Location Tracking</p>
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Geofencing & Location</p>
+                    </div>
                     <span className="text-xs text-muted-foreground">Updated {selectedPerson.location.lastUpdated}</span>
                   </div>
-                  <div className="flex items-center gap-4">
+                  
+                  {/* Current Location Status */}
+                  <div className={cn(
+                    "flex items-center gap-4 p-4 rounded-lg border mb-4",
+                    getGeofenceStatusColor(selectedPerson.location.geofenceStatus).bg,
+                    getGeofenceStatusColor(selectedPerson.location.geofenceStatus).border
+                  )}>
                     {(() => {
                       const LocationIcon = getLocationIcon(selectedPerson.location.type);
+                      const statusColors = getGeofenceStatusColor(selectedPerson.location.geofenceStatus);
                       return (
-                        <div className="p-4 bg-foreground rounded-lg">
-                          <LocationIcon className="w-6 h-6 text-background" />
-                        </div>
+                        <>
+                          <div className={cn("p-4 rounded-lg", statusColors.bg)}>
+                            <LocationIcon className={cn("w-6 h-6", statusColors.text)} />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-lg font-medium">{selectedPerson.location.current}</p>
+                            <p className={cn("text-sm capitalize flex items-center gap-2", statusColors.text)}>
+                              {selectedPerson.location.geofenceStatus === "safe" && <CheckCircle2 className="w-4 h-4" />}
+                              {selectedPerson.location.geofenceStatus === "warning" && <AlertTriangle className="w-4 h-4" />}
+                              {selectedPerson.location.geofenceStatus === "danger" && <AlertCircle className="w-4 h-4" />}
+                              {selectedPerson.location.geofenceStatus} zone
+                            </p>
+                          </div>
+                        </>
                       );
                     })()}
-                    <div>
-                      <p className="text-lg font-medium">{selectedPerson.location.current}</p>
-                      <p className="text-sm text-muted-foreground capitalize">{selectedPerson.location.type} location</p>
-                    </div>
                   </div>
+
+                  {/* Geofence Zones */}
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground mb-3">Zone Status</p>
+                    {selectedPerson.location.geofences.map((fence) => {
+                      const colors = getGeofenceStatusColor(fence.type);
+                      return (
+                        <div key={fence.id} className={cn(
+                          "flex items-center justify-between p-3 rounded-lg border",
+                          fence.isInside ? colors.bg : "bg-muted/30",
+                          fence.isInside ? colors.border : "border-border"
+                        )}>
+                          <div className="flex items-center gap-3">
+                            <Circle className={cn(
+                              "w-3 h-3",
+                              fence.isInside ? colors.text : "text-muted-foreground"
+                            )} fill={fence.isInside ? "currentColor" : "none"} />
+                            <span className="text-sm font-medium">{fence.name}</span>
+                            <span className="text-xs text-muted-foreground">({fence.radius}m radius)</span>
+                          </div>
+                          <Badge className={cn(
+                            "text-xs",
+                            fence.isInside ? colors.bg : "bg-muted",
+                            fence.isInside ? colors.text : "text-muted-foreground",
+                            "border",
+                            fence.isInside ? colors.border : "border-border"
+                          )}>
+                            {fence.isInside ? "Inside" : "Outside"}
+                          </Badge>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* GPS Status */}
                   <div className="mt-4 p-4 bg-muted/50 rounded-lg">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">GPS tracking</span>
-                      <span className="font-medium">Active</span>
+                      <span className="text-muted-foreground">GPS Tracking</span>
+                      <span className="font-medium flex items-center gap-2">
+                        <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                        Active
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -371,9 +527,9 @@ const Profiles = () => {
                         <div className="flex items-center gap-4">
                           <div className={cn(
                             "p-2 rounded-lg",
-                            med.taken ? "bg-muted" : "bg-foreground"
+                            med.taken ? "bg-emerald-500/10" : "bg-amber-500/10"
                           )}>
-                            <Pill className={cn("w-4 h-4", med.taken ? "text-muted-foreground" : "text-background")} />
+                            <Pill className={cn("w-4 h-4", med.taken ? "text-emerald-500" : "text-amber-500")} />
                           </div>
                           <div>
                             <p className={cn("font-medium", med.taken && "text-muted-foreground")}>
@@ -385,7 +541,7 @@ const Profiles = () => {
                           </div>
                         </div>
                         {med.taken ? (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2 text-sm text-emerald-500">
                             <CheckCircle2 className="w-4 h-4" />
                             Taken
                           </div>
@@ -417,22 +573,21 @@ const Profiles = () => {
 
                 {/* Quick Actions */}
                 <div className="flex gap-4">
-                  <Button className="flex-1 gap-2" onClick={() => navigate("/monitor")}>
-                    <Activity className="w-4 h-4" />
-                    Health Monitor
+                  <Button className="flex-1 gap-2">
+                    <Phone className="w-4 h-4" />
+                    Call Contact
                   </Button>
                   <Button variant="outline" className="flex-1 gap-2">
-                    <Phone className="w-4 h-4" />
-                    Emergency Contact
+                    <Bell className="w-4 h-4" />
+                    Send Alert
                   </Button>
                 </div>
               </>
             ) : (
-              <div className="border border-border rounded-lg h-96 flex items-center justify-center">
+              <div className="h-full flex items-center justify-center text-muted-foreground">
                 <div className="text-center">
-                  <Users className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-                  <h3 className="font-medium">Select a Profile</h3>
-                  <p className="text-sm text-muted-foreground">Click on a profile to view details</p>
+                  <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>Select a profile to view details</p>
                 </div>
               </div>
             )}

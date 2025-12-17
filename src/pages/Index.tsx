@@ -16,19 +16,24 @@ import {
   Video,
   Calendar,
   Pill,
-  MapPin
+  MapPin,
+  Bot,
+  Sparkles
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { GrampsAI } from "@/components/GrampsAI";
 
 const Index = () => {
   const navigate = useNavigate();
   const [alerts] = useState(3);
+  const [isAIOpen, setIsAIOpen] = useState(false);
+  const [isAIExpanded, setIsAIExpanded] = useState(false);
 
   const menuItems = [
     {
       id: "cameras",
       title: "Security Cameras",
-      description: "Monitor live feeds from all rooms",
+      description: "Monitor live feeds with AI posture detection",
       icon: Camera,
       badge: "4 Active",
       route: "/cameras",
@@ -36,7 +41,7 @@ const Index = () => {
     {
       id: "profiles",
       title: "Elderly Profiles",
-      description: "Health, medications & location tracking",
+      description: "Health, medications, geofencing & location",
       icon: Users,
       badge: "3 People",
       route: "/profiles",
@@ -83,6 +88,14 @@ const Index = () => {
             </div>
 
             <div className="flex items-center gap-1">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="rounded-full"
+                onClick={() => setIsAIOpen(true)}
+              >
+                <Bot className="w-5 h-5" />
+              </Button>
               <Button variant="ghost" size="icon" className="rounded-full relative">
                 <Bell className="w-5 h-5" />
                 {alerts > 0 && (
@@ -109,6 +122,31 @@ const Index = () => {
               <p className="text-2xl font-semibold">{stat.value}</p>
             </div>
           ))}
+        </div>
+
+        {/* GrampsAI Quick Access */}
+        <div 
+          className="mb-10 p-6 border border-border rounded-lg cursor-pointer hover-lift bg-gradient-to-r from-background to-muted/30"
+          onClick={() => setIsAIOpen(true)}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-foreground rounded-lg">
+                <Bot className="w-6 h-6 text-background" />
+              </div>
+              <div>
+                <h3 className="text-lg font-medium flex items-center gap-2">
+                  GrampsAI
+                  <Sparkles className="w-4 h-4 text-muted-foreground" />
+                </h3>
+                <p className="text-sm text-muted-foreground">Your AI assistant for elderly health questions & care guidance</p>
+              </div>
+            </div>
+            <Button variant="outline" className="gap-2">
+              Ask GrampsAI
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Main Menu Grid */}
@@ -146,17 +184,23 @@ const Index = () => {
           </div>
           <div className="divide-y divide-border">
             {[
-              { icon: Heart, text: "John's heart rate normal at 72 bpm", time: "2 min ago" },
-              { icon: Pill, text: "Mary took morning medication", time: "10 min ago" },
-              { icon: MapPin, text: "Robert arrived at Living Room", time: "15 min ago" },
-              { icon: Calendar, text: "Dr. Smith appointment confirmed", time: "1 hour ago" },
+              { icon: Heart, text: "John's heart rate normal at 72 bpm", time: "2 min ago", status: "safe" },
+              { icon: Pill, text: "Mary took morning medication", time: "10 min ago", status: "safe" },
+              { icon: MapPin, text: "Robert left safe zone - Warning alert", time: "15 min ago", status: "warning" },
+              { icon: Calendar, text: "Dr. Smith appointment confirmed", time: "1 hour ago", status: "safe" },
             ].map((activity, i) => (
               <div key={i} className="flex items-center gap-4 px-6 py-4 hover:bg-muted/30 transition-colors">
-                <div className="p-2 rounded-md bg-muted">
-                  <activity.icon className="w-4 h-4" />
+                <div className={`p-2 rounded-md ${
+                  activity.status === "warning" ? "bg-amber-500/10" : "bg-muted"
+                }`}>
+                  <activity.icon className={`w-4 h-4 ${
+                    activity.status === "warning" ? "text-amber-500" : ""
+                  }`} />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm">{activity.text}</p>
+                  <p className={`text-sm ${activity.status === "warning" ? "text-amber-600" : ""}`}>
+                    {activity.text}
+                  </p>
                   <p className="text-xs text-muted-foreground">{activity.time}</p>
                 </div>
               </div>
@@ -164,6 +208,14 @@ const Index = () => {
           </div>
         </div>
       </main>
+
+      {/* GrampsAI Chat */}
+      <GrampsAI 
+        isOpen={isAIOpen} 
+        onClose={() => setIsAIOpen(false)}
+        isExpanded={isAIExpanded}
+        onToggleExpand={() => setIsAIExpanded(!isAIExpanded)}
+      />
     </div>
   );
 };
