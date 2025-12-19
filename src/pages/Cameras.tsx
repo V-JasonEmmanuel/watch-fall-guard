@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { 
   ArrowLeft, 
   Camera, 
@@ -17,11 +19,13 @@ import {
   AlertTriangle,
   User,
   Activity,
-  MessageCircle
+  MessageCircle,
+  Phone
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CameraFeed {
   id: string;
@@ -38,6 +42,8 @@ const Cameras = () => {
   const { toast } = useToast();
   const [selectedCamera, setSelectedCamera] = useState<string>("cam1");
   const [isMuted, setIsMuted] = useState(true);
+  const [emergencyPhone, setEmergencyPhone] = useState<string>("");
+  const [isSendingAlert, setIsSendingAlert] = useState(false);
 
   const [cameras, setCameras] = useState<CameraFeed[]>([
     { id: "cam1", name: "Living Room", location: "Ground Floor", status: "online", hasMotion: true, posture: "sitting", personDetected: true },
@@ -65,25 +71,52 @@ const Cameras = () => {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [selectedCamera, activeCamera]);
+  }, [selectedCamera, activeCamera, emergencyPhone]);
 
-  const sendWhatsAppAlert = (camera: CameraFeed | undefined) => {
+  const sendWhatsAppAlert = async (camera: CameraFeed | undefined) => {
     if (!camera) return;
     
-    toast({
-      title: "⚠️ FALL DETECTED!",
-      description: `WhatsApp alert sent to emergency contacts. Location: ${camera.name}`,
-      variant: "destructive",
-    });
+    if (!emergencyPhone) {
+      toast({
+        title: "⚠️ FALL DETECTED!",
+        description: "Please configure emergency phone number for WhatsApp alerts.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSendingAlert(true);
     
-    // Backend placeholder - In production, this would call an API
-    console.log("BACKEND PLACEHOLDER: Send WhatsApp alert", {
-      camera: camera.name,
-      location: camera.location,
-      timestamp: new Date().toISOString(),
-      alertType: "FALL_DETECTED",
-      message: `URGENT: Fall detected in ${camera.name}. Please check immediately.`
-    });
+    try {
+      const { data, error } = await supabase.functions.invoke('send-whatsapp-alert', {
+        body: {
+          elderlyName: "Elderly Resident",
+          cameraLocation: `${camera.name} - ${camera.location}`,
+          alertType: "fall",
+          recipientPhone: emergencyPhone,
+          timestamp: new Date().toLocaleString()
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "🚨 FALL DETECTED!",
+        description: `WhatsApp alert sent successfully to ${emergencyPhone}`,
+        variant: "destructive",
+      });
+      
+      console.log("WhatsApp alert sent:", data);
+    } catch (error) {
+      console.error("Failed to send WhatsApp alert:", error);
+      toast({
+        title: "⚠️ FALL DETECTED!",
+        description: `Fall detected in ${camera.name}. WhatsApp alert failed - please check Twilio configuration.`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingAlert(false);
+    }
   };
 
   const getPostureIcon = (posture: string) => {
@@ -338,20 +371,51 @@ const Cameras = () => {
               </div>
             )}
 
-            {/* WhatsApp Integration Status */}
+            {/* WhatsApp Integration Configuration */}
             <Card className="border border-border">
               <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <MessageCircle className="w-5 h-5 text-emerald-500" />
-                    <div>
-                      <p className="text-sm font-medium">WhatsApp Alerts</p>
-                      <p className="text-xs text-muted-foreground">Fall detection notifications enabled</p>
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <MessageCircle className="w-5 h-5 text-emerald-500" />
+                      <div>
+                        <p className="text-sm font-medium">WhatsApp Alerts via Twilio</p>
+                        <p className="text-xs text-muted-foreground">Real-time fall detection notifications</p>
+                      </div>
                     </div>
+                    <Badge className={cn(
+                      "border",
+                      emergencyPhone 
+                        ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/30" 
+                        : "bg-amber-500/10 text-amber-500 border-amber-500/30"
+                    )}>
+                      {emergencyPhone ? "Configured" : "Setup Required"}
+                    </Badge>
                   </div>
-                  <Badge className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">
-                    Connected
-                  </Badge>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <Label htmlFor="phone" className="text-xs text-muted-foreground">Emergency Phone (with country code)</Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Phone className="w-4 h-4 text-muted-foreground" />
+                        <Input
+                          id="phone"
+                          type="tel"
+                          placeholder="+1234567890"
+                          value={emergencyPhone}
+                          onChange={(e) => setEmergencyPhone(e.target.value)}
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => sendWhatsAppAlert(activeCamera)}
+                      disabled={!emergencyPhone || isSendingAlert}
+                    >
+                      {isSendingAlert ? "Sending..." : "Test Alert"}
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
