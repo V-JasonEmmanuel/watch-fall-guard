@@ -7,10 +7,11 @@ const corsHeaders = {
 
 interface AlertRequest {
   elderlyName: string;
-  cameraLocation: string;
-  alertType: 'fall' | 'danger' | 'warning';
+  location: string;
+  alertType: 'fall' | 'medication' | 'geofence' | 'vitals' | 'danger' | 'warning';
   recipientPhone: string;
   timestamp?: string;
+  details?: string;
 }
 
 serve(async (req) => {
@@ -29,10 +30,10 @@ serve(async (req) => {
       throw new Error('Twilio credentials not configured');
     }
 
-    const { elderlyName, cameraLocation, alertType, recipientPhone, timestamp }: AlertRequest = await req.json();
+    const { elderlyName, location, alertType, recipientPhone, timestamp, details }: AlertRequest = await req.json();
 
-    if (!elderlyName || !cameraLocation || !alertType || !recipientPhone) {
-      throw new Error('Missing required fields: elderlyName, cameraLocation, alertType, recipientPhone');
+    if (!elderlyName || !alertType || !recipientPhone) {
+      throw new Error('Missing required fields: elderlyName, alertType, recipientPhone');
     }
 
     const alertTime = timestamp || new Date().toLocaleString();
@@ -42,30 +43,62 @@ serve(async (req) => {
       case 'fall':
         messageBody = `🚨 URGENT FALL ALERT 🚨\n\n` +
           `${elderlyName} has fallen!\n\n` +
-          `📍 Location: ${cameraLocation}\n` +
+          `📍 Location: ${location}\n` +
           `⏰ Time: ${alertTime}\n\n` +
           `Please check on them immediately or contact emergency services if needed.`;
         break;
+      case 'medication':
+        messageBody = `💊 MEDICATION REMINDER ALERT 💊\n\n` +
+          `${elderlyName} has missed their medication!\n\n` +
+          `💊 Medication: ${details || 'Scheduled medication'}\n` +
+          `⏰ Time: ${alertTime}\n\n` +
+          `Please ensure they take their medication as prescribed.`;
+        break;
+      case 'geofence':
+        messageBody = `📍 GEOFENCE ALERT 📍\n\n` +
+          `${elderlyName} has left their safe zone!\n\n` +
+          `📍 Current Location: ${location}\n` +
+          `⚠️ Zone: ${details || 'Outside designated area'}\n` +
+          `⏰ Time: ${alertTime}\n\n` +
+          `Please verify their safety and location.`;
+        break;
+      case 'vitals':
+        messageBody = `❤️ ABNORMAL VITALS ALERT ❤️\n\n` +
+          `Abnormal health readings detected for ${elderlyName}!\n\n` +
+          `🏥 Details: ${details || 'Abnormal vital signs detected'}\n` +
+          `📍 Location: ${location || 'Unknown'}\n` +
+          `⏰ Time: ${alertTime}\n\n` +
+          `Please check on them or contact healthcare provider.`;
+        break;
       case 'danger':
         messageBody = `⚠️ DANGER ALERT ⚠️\n\n` +
-          `Concerning activity detected for ${elderlyName}\n\n` +
-          `📍 Location: ${cameraLocation}\n` +
-          `⏰ Time: ${alertTime}\n\n` +
-          `Please verify their safety.`;
+          `Critical situation detected for ${elderlyName}\n\n` +
+          `📍 Location: ${location}\n` +
+          `⏰ Time: ${alertTime}\n` +
+          `${details ? `📋 Details: ${details}\n` : ''}\n` +
+          `Please verify their safety immediately.`;
         break;
       case 'warning':
         messageBody = `⚡ ACTIVITY WARNING\n\n` +
           `Unusual activity detected for ${elderlyName}\n\n` +
-          `📍 Location: ${cameraLocation}\n` +
-          `⏰ Time: ${alertTime}`;
+          `📍 Location: ${location}\n` +
+          `⏰ Time: ${alertTime}` +
+          `${details ? `\n📋 Details: ${details}` : ''}`;
         break;
+      default:
+        messageBody = `🔔 ALERT\n\n` +
+          `Alert for ${elderlyName}\n\n` +
+          `📍 Location: ${location || 'Unknown'}\n` +
+          `⏰ Time: ${alertTime}` +
+          `${details ? `\n📋 Details: ${details}` : ''}`;
     }
 
     // Format phone number for WhatsApp
     const toWhatsApp = `whatsapp:${recipientPhone.startsWith('+') ? recipientPhone : '+' + recipientPhone}`;
     const fromNumber = `whatsapp:${fromWhatsApp.startsWith('+') ? fromWhatsApp : '+' + fromWhatsApp}`;
 
-    console.log(`Sending WhatsApp alert to ${toWhatsApp} from ${fromNumber}`);
+    console.log(`Sending WhatsApp ${alertType} alert to ${toWhatsApp} from ${fromNumber}`);
+    console.log(`Alert details: ${elderlyName}, ${location}, ${details}`);
 
     // Send WhatsApp message via Twilio API
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
