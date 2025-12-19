@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,11 +28,13 @@ import {
   Shield,
   AlertTriangle,
   MapPinOff,
-  Circle
+  Circle,
+  MessageCircle
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useWhatsAppAlert } from "@/hooks/useWhatsAppAlert";
 
 interface Medication {
   id: string;
@@ -82,7 +84,9 @@ interface ElderlyProfile {
 const Profiles = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { sendAlert, isSending, emergencyPhone } = useWhatsAppAlert();
   const [selectedProfile, setSelectedProfile] = useState<string | null>("1");
+  const [alertsSent, setAlertsSent] = useState<Set<string>>(new Set());
 
   const [profiles, setProfiles] = useState<ElderlyProfile[]>([
     {
@@ -227,6 +231,97 @@ const Profiles = () => {
       description: "The medication reminder has been updated.",
     });
   };
+
+  // Monitor for missed medications and send alerts
+  useEffect(() => {
+    const checkMedications = () => {
+      profiles.forEach(profile => {
+        const missedMeds = profile.medications.filter(med => {
+          if (med.taken || med.time === "As needed") return false;
+          const alertKey = `med-${profile.id}-${med.id}`;
+          if (alertsSent.has(alertKey)) return false;
+          
+          // Check if medication time has passed (simplified check)
+          const now = new Date();
+          const [time, period] = med.time.split(' ');
+          const [hours, minutes] = time.split(':').map(Number);
+          let medHour = hours;
+          if (period === 'PM' && hours !== 12) medHour += 12;
+          if (period === 'AM' && hours === 12) medHour = 0;
+          
+          const currentHour = now.getHours();
+          return currentHour > medHour;
+        });
+
+        missedMeds.forEach(med => {
+          const alertKey = `med-${profile.id}-${med.id}`;
+          sendAlert({
+            elderlyName: profile.name,
+            location: profile.room,
+            alertType: 'medication',
+            details: `${med.name} ${med.dosage} - Scheduled for ${med.time}`
+          });
+          setAlertsSent(prev => new Set([...prev, alertKey]));
+        });
+      });
+    };
+
+    const interval = setInterval(checkMedications, 60000); // Check every minute
+    checkMedications(); // Initial check
+    return () => clearInterval(interval);
+  }, [profiles, alertsSent, sendAlert]);
+
+  // Monitor for geofence violations
+  useEffect(() => {
+    profiles.forEach(profile => {
+      const alertKey = `geo-${profile.id}-${profile.location.geofenceStatus}`;
+      
+      if (profile.location.geofenceStatus !== 'safe' && !alertsSent.has(alertKey)) {
+        const leftZones = profile.location.geofences.filter(f => !f.isInside && f.type === 'safe');
+        sendAlert({
+          elderlyName: profile.name,
+          location: profile.location.current,
+          alertType: 'geofence',
+          details: leftZones.length > 0 
+            ? `Left: ${leftZones.map(z => z.name).join(', ')}` 
+            : `Currently in ${profile.location.geofenceStatus} zone`
+        });
+        setAlertsSent(prev => new Set([...prev, alertKey]));
+      }
+    });
+  }, [profiles, alertsSent, sendAlert]);
+
+  // Monitor for abnormal vitals
+  useEffect(() => {
+    profiles.forEach(profile => {
+      const abnormalVitals: string[] = [];
+      
+      if (getVitalStatus("heartRate", profile.heartRate) === "danger") {
+        abnormalVitals.push(`Heart Rate: ${profile.heartRate} bpm (CRITICAL)`);
+      }
+      if (getVitalStatus("spo2", profile.spo2) === "danger") {
+        abnormalVitals.push(`SpO2: ${profile.spo2}% (LOW)`);
+      }
+      if (getVitalStatus("temperature", profile.temperature) === "danger") {
+        abnormalVitals.push(`Temperature: ${profile.temperature}°F (ABNORMAL)`);
+      }
+      if (getVitalStatus("stress", profile.stressLevel) === "danger") {
+        abnormalVitals.push(`Stress Level: ${profile.stressLevel}% (HIGH)`);
+      }
+
+      const alertKey = `vitals-${profile.id}-${abnormalVitals.join('-')}`;
+      
+      if (abnormalVitals.length > 0 && !alertsSent.has(alertKey)) {
+        sendAlert({
+          elderlyName: profile.name,
+          location: profile.room,
+          alertType: 'vitals',
+          details: abnormalVitals.join(', ')
+        });
+        setAlertsSent(prev => new Set([...prev, alertKey]));
+      }
+    });
+  }, [profiles, alertsSent, sendAlert]);
 
   const selectedPerson = profiles.find(p => p.id === selectedProfile);
   const takenMeds = selectedPerson?.medications.filter(m => m.taken).length || 0;
@@ -577,10 +672,34 @@ const Profiles = () => {
                     <Phone className="w-4 h-4" />
                     Call Contact
                   </Button>
-                  <Button variant="outline" className="flex-1 gap-2">
-                    <Bell className="w-4 h-4" />
-                    Send Alert
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 gap-2"
+                    onClick={() => sendAlert({
+                      elderlyName: selectedPerson.name,
+                      location: selectedPerson.room,
+                      alertType: 'warning',
+                      details: 'Manual alert sent by caregiver'
+                    })}
+                    disabled={isSending}
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    {isSending ? "Sending..." : "Send WhatsApp Alert"}
                   </Button>
+                </div>
+
+                {/* WhatsApp Status */}
+                <div className="p-4 bg-muted/50 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <MessageCircle className="w-5 h-5 text-emerald-500" />
+                    <div>
+                      <p className="text-sm font-medium">WhatsApp Alerts Active</p>
+                      <p className="text-xs text-muted-foreground">Sending to {emergencyPhone}</p>
+                    </div>
+                  </div>
+                  <Badge className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">
+                    Connected
+                  </Badge>
                 </div>
               </>
             ) : (

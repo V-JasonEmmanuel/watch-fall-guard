@@ -24,8 +24,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useWhatsAppAlert } from "@/hooks/useWhatsAppAlert";
 
 interface CameraFeed {
   id: string;
@@ -39,11 +38,9 @@ interface CameraFeed {
 
 const Cameras = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { sendAlert, isSending, emergencyPhone, setEmergencyPhone, DEFAULT_EMERGENCY_PHONE } = useWhatsAppAlert();
   const [selectedCamera, setSelectedCamera] = useState<string>("cam1");
   const [isMuted, setIsMuted] = useState(true);
-  const [emergencyPhone, setEmergencyPhone] = useState<string>("");
-  const [isSendingAlert, setIsSendingAlert] = useState(false);
 
   const [cameras, setCameras] = useState<CameraFeed[]>([
     { id: "cam1", name: "Living Room", location: "Ground Floor", status: "online", hasMotion: true, posture: "sitting", personDetected: true },
@@ -66,57 +63,21 @@ const Cameras = () => {
         ));
         
         // Trigger WhatsApp alert
-        sendWhatsAppAlert(activeCamera);
+        sendFallAlert(activeCamera);
       }
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [selectedCamera, activeCamera, emergencyPhone]);
+  }, [selectedCamera, activeCamera]);
 
-  const sendWhatsAppAlert = async (camera: CameraFeed | undefined) => {
+  const sendFallAlert = async (camera: CameraFeed | undefined) => {
     if (!camera) return;
     
-    if (!emergencyPhone) {
-      toast({
-        title: "⚠️ FALL DETECTED!",
-        description: "Please configure emergency phone number for WhatsApp alerts.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSendingAlert(true);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('send-whatsapp-alert', {
-        body: {
-          elderlyName: "Elderly Resident",
-          cameraLocation: `${camera.name} - ${camera.location}`,
-          alertType: "fall",
-          recipientPhone: emergencyPhone,
-          timestamp: new Date().toLocaleString()
-        }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "🚨 FALL DETECTED!",
-        description: `WhatsApp alert sent successfully to ${emergencyPhone}`,
-        variant: "destructive",
-      });
-      
-      console.log("WhatsApp alert sent:", data);
-    } catch (error) {
-      console.error("Failed to send WhatsApp alert:", error);
-      toast({
-        title: "⚠️ FALL DETECTED!",
-        description: `Fall detected in ${camera.name}. WhatsApp alert failed - please check Twilio configuration.`,
-        variant: "destructive",
-      });
-    } finally {
-      setIsSendingAlert(false);
-    }
+    await sendAlert({
+      elderlyName: "Elderly Resident",
+      location: `${camera.name} - ${camera.location}`,
+      alertType: "fall"
+    });
   };
 
   const getPostureIcon = (posture: string) => {
@@ -143,17 +104,9 @@ const Cameras = () => {
     setCameras(prev => prev.map(c => 
       c.id === selectedCamera ? { ...c, posture: "sitting" } : c
     ));
-    toast({
-      title: "Status Reset",
-      description: "Fall alert has been cleared.",
-    });
   };
 
   const handleAddCamera = () => {
-    toast({
-      title: "Add Camera",
-      description: "Backend placeholder: Camera addition would be configured here.",
-    });
     console.log("BACKEND PLACEHOLDER: Add new camera");
   };
 
@@ -410,10 +363,10 @@ const Cameras = () => {
                     <Button 
                       size="sm" 
                       variant="outline"
-                      onClick={() => sendWhatsAppAlert(activeCamera)}
-                      disabled={!emergencyPhone || isSendingAlert}
+                      onClick={() => sendFallAlert(activeCamera)}
+                      disabled={!emergencyPhone || isSending}
                     >
-                      {isSendingAlert ? "Sending..." : "Test Alert"}
+                      {isSending ? "Sending..." : "Test Alert"}
                     </Button>
                   </div>
                 </div>
