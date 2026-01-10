@@ -1,216 +1,233 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
+  Heart, 
+  MapPin, 
   Camera, 
-  Users, 
-  Stethoscope, 
-  Ambulance,
-  Shield,
-  Bell,
-  Settings,
-  ChevronRight,
+  Pill, 
+  Phone, 
+  Bot, 
+  Sun, 
+  Moon,
   Activity,
-  Heart,
-  Video,
-  Calendar,
-  Pill,
-  MapPin,
-  Bot,
-  Sparkles
+  Shield,
+  Smile,
+  AlertTriangle,
+  CheckCircle2,
+  Bell,
+  Users,
+  Stethoscope
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { GrampsAI } from "@/components/GrampsAI";
+import { cn } from "@/lib/utils";
+import { VoiceCompanion } from "@/components/VoiceCompanion";
+import { HealthDashboard } from "@/components/HealthDashboard";
+import { LocationTracker } from "@/components/LocationTracker";
+import { DailyAssistant } from "@/components/DailyAssistant";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [alerts] = useState(3);
   const [isAIOpen, setIsAIOpen] = useState(false);
   const [isAIExpanded, setIsAIExpanded] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
 
-  const menuItems = [
-    {
-      id: "cameras",
-      title: "Security Cameras",
-      description: "Monitor live feeds with AI posture detection",
-      icon: Camera,
-      badge: "4 Active",
-      route: "/cameras",
-    },
-    {
-      id: "profiles",
-      title: "Elderly Profiles",
-      description: "Health, medications, geofencing & location",
-      icon: Users,
-      badge: "3 People",
-      route: "/profiles",
-    },
-    {
-      id: "healthcare",
-      title: "Healthcare",
-      description: "Book appointments, scans & tests",
-      icon: Stethoscope,
-      badge: "2 Upcoming",
-      route: "/healthcare",
-    },
-    {
-      id: "emergency",
-      title: "Emergency Care",
-      description: "Quick access to emergency services",
-      icon: Ambulance,
-      badge: "Ready",
-      route: "/emergency",
-    },
-  ];
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+    document.documentElement.classList.toggle('dark');
+  };
 
-  const quickStats = [
-    { label: "Active Monitors", value: "4", icon: Video },
-    { label: "People Tracked", value: "3", icon: Users },
-    { label: "Medications Today", value: "8", icon: Pill },
-    { label: "System Status", value: "Online", icon: Activity },
-  ];
+  // Mock status data
+  const overallStatus = {
+    health: "stable" as const,
+    activity: "normal" as const,
+    emotional: "calm" as const,
+    lastAlert: "2 hours ago",
+  };
+
+  const statusConfig = {
+    stable: { color: "bg-safe text-safe-foreground", icon: CheckCircle2, label: "Stable" },
+    warning: { color: "bg-warning text-warning-foreground", icon: AlertTriangle, label: "Needs Attention" },
+    critical: { color: "bg-critical text-critical-foreground", icon: AlertTriangle, label: "Critical" },
+    normal: { color: "bg-info text-info-foreground", icon: Activity, label: "Normal" },
+    calm: { color: "bg-safe text-safe-foreground", icon: Smile, label: "Calm" },
+  };
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="container mx-auto px-6 py-5">
+      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-sm border-b border-border">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="p-2.5 bg-foreground rounded-lg">
-                <Shield className="w-5 h-5 text-background" />
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-primary rounded-xl">
+                <Shield className="w-6 h-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold tracking-tight">ElderGuard</h1>
-                <p className="text-xs text-muted-foreground tracking-wide uppercase">Care Management</p>
+                <h1 className="text-xl font-bold">ElderGuard</h1>
+                <p className="text-xs text-muted-foreground">Care Platform</p>
               </div>
             </div>
-
-            <div className="flex items-center gap-1">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="rounded-full"
-                onClick={() => setIsAIOpen(true)}
-              >
-                <Bot className="w-5 h-5" />
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" className="rounded-full" onClick={toggleDarkMode}>
+                {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </Button>
               <Button variant="ghost" size="icon" className="rounded-full relative">
                 <Bell className="w-5 h-5" />
-                {alerts > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-foreground rounded-full" />
-                )}
+                <span className="absolute top-1 right-1 w-2 h-2 bg-critical rounded-full" />
               </Button>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <Settings className="w-5 h-5" />
+              <Button onClick={() => setIsAIOpen(true)} className="gap-2 elder-button">
+                <Bot className="w-5 h-5" />
+                Talk to GrampsAI
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-8">
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-          {quickStats.map((stat, i) => (
-            <div key={i} className="p-5 border border-border rounded-lg hover-lift">
-              <div className="flex items-center gap-3 mb-3">
-                <stat.icon className="w-4 h-4 text-muted-foreground" />
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">{stat.label}</p>
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Status Overview Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="elder-card-safe">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-3">
+                <Heart className="w-8 h-8 text-safe" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Health</p>
+                  <p className="text-xl font-bold text-safe">Stable</p>
+                </div>
               </div>
-              <p className="text-2xl font-semibold">{stat.value}</p>
-            </div>
-          ))}
+            </CardContent>
+          </Card>
+          <Card className="elder-card">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-3">
+                <Activity className="w-8 h-8 text-info" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Activity</p>
+                  <p className="text-xl font-bold">Normal</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="elder-card-safe">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-3">
+                <Smile className="w-8 h-8 text-safe" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Emotional</p>
+                  <p className="text-xl font-bold text-safe">Calm</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="elder-card">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-3">
+                <Bell className="w-8 h-8 text-muted-foreground" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Last Alert</p>
+                  <p className="text-xl font-bold">2h ago</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* GrampsAI Quick Access */}
-        <div 
-          className="mb-10 p-6 border border-border rounded-lg cursor-pointer hover-lift bg-gradient-to-r from-background to-muted/30"
-          onClick={() => setIsAIOpen(true)}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-foreground rounded-lg">
-                <Bot className="w-6 h-6 text-background" />
-              </div>
-              <div>
-                <h3 className="text-lg font-medium flex items-center gap-2">
-                  GrampsAI
-                  <Sparkles className="w-4 h-4 text-muted-foreground" />
-                </h3>
-                <p className="text-sm text-muted-foreground">Your AI assistant for elderly health questions & care guidance</p>
-              </div>
+        {/* Emergency SOS Button */}
+        <Card className="bg-critical/5 border-2 border-critical/30">
+          <CardContent className="p-6 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold">Emergency Assistance</h2>
+              <p className="text-muted-foreground">Tap for immediate help</p>
             </div>
-            <Button variant="outline" className="gap-2">
-              Ask GrampsAI
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Main Menu Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-10">
-          {menuItems.map((item) => (
-            <div 
-              key={item.id}
-              className="group p-6 border border-border rounded-lg cursor-pointer hover-lift bg-card"
-              onClick={() => navigate(item.route)}
+            <Button 
+              onClick={() => navigate('/emergency')}
+              className="h-20 w-20 rounded-full bg-critical hover:bg-critical/90 text-2xl font-bold sos-pulse"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-5">
-                  <div className="p-4 bg-foreground rounded-lg group-hover:bg-foreground/90 transition-colors">
-                    <item.icon className="w-6 h-6 text-background" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <h3 className="text-lg font-medium">{item.title}</h3>
-                    <p className="text-sm text-muted-foreground">{item.description}</p>
-                    <Badge variant="secondary" className="mt-2 text-xs font-normal">{item.badge}</Badge>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-              </div>
-            </div>
-          ))}
-        </div>
+              SOS
+            </Button>
+          </CardContent>
+        </Card>
 
-        {/* Recent Activity */}
-        <div className="border border-border rounded-lg">
-          <div className="px-6 py-4 border-b border-border">
-            <h2 className="text-lg font-medium flex items-center gap-2">
-              <Activity className="w-4 h-4" />
-              Recent Activity
-            </h2>
-          </div>
-          <div className="divide-y divide-border">
-            {[
-              { icon: Heart, text: "John's heart rate normal at 72 bpm", time: "2 min ago", status: "safe" },
-              { icon: Pill, text: "Mary took morning medication", time: "10 min ago", status: "safe" },
-              { icon: MapPin, text: "Robert left safe zone - Warning alert", time: "15 min ago", status: "warning" },
-              { icon: Calendar, text: "Dr. Smith appointment confirmed", time: "1 hour ago", status: "safe" },
-            ].map((activity, i) => (
-              <div key={i} className="flex items-center gap-4 px-6 py-4 hover:bg-muted/30 transition-colors">
-                <div className={`p-2 rounded-md ${
-                  activity.status === "warning" ? "bg-amber-500/10" : "bg-muted"
-                }`}>
-                  <activity.icon className={`w-4 h-4 ${
-                    activity.status === "warning" ? "text-amber-500" : ""
-                  }`} />
-                </div>
-                <div className="flex-1">
-                  <p className={`text-sm ${activity.status === "warning" ? "text-amber-600" : ""}`}>
-                    {activity.text}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{activity.time}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Main Content Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4 h-14">
+            <TabsTrigger value="overview" className="text-base gap-2">
+              <Heart className="w-4 h-4" /> Health
+            </TabsTrigger>
+            <TabsTrigger value="location" className="text-base gap-2">
+              <MapPin className="w-4 h-4" /> Location
+            </TabsTrigger>
+            <TabsTrigger value="daily" className="text-base gap-2">
+              <Pill className="w-4 h-4" /> Daily Care
+            </TabsTrigger>
+            <TabsTrigger value="safety" className="text-base gap-2">
+              <Camera className="w-4 h-4" /> Safety
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview">
+            <HealthDashboard showSimpleMode={true} />
+          </TabsContent>
+
+          <TabsContent value="location">
+            <LocationTracker />
+          </TabsContent>
+
+          <TabsContent value="daily">
+            <DailyAssistant />
+          </TabsContent>
+
+          <TabsContent value="safety">
+            <div className="space-y-4">
+              <Card className="hover-lift cursor-pointer" onClick={() => navigate('/cameras')}>
+                <CardContent className="p-6 flex items-center gap-4">
+                  <div className="p-4 rounded-xl bg-primary/10">
+                    <Camera className="w-8 h-8 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold">Fall Detection Cameras</h3>
+                    <p className="text-muted-foreground">AI-powered monitoring</p>
+                  </div>
+                  <Badge className="bg-safe/10 text-safe">4 Active</Badge>
+                </CardContent>
+              </Card>
+              <Card className="hover-lift cursor-pointer" onClick={() => navigate('/profiles')}>
+                <CardContent className="p-6 flex items-center gap-4">
+                  <div className="p-4 rounded-xl bg-info/10">
+                    <Users className="w-8 h-8 text-info" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold">Elderly Profiles</h3>
+                    <p className="text-muted-foreground">Health & location data</p>
+                  </div>
+                  <Badge variant="secondary">3 People</Badge>
+                </CardContent>
+              </Card>
+              <Card className="hover-lift cursor-pointer" onClick={() => navigate('/healthcare')}>
+                <CardContent className="p-6 flex items-center gap-4">
+                  <div className="p-4 rounded-xl bg-health-bp/10">
+                    <Stethoscope className="w-8 h-8 text-health-bp" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold">Healthcare</h3>
+                    <p className="text-muted-foreground">Appointments & records</p>
+                  </div>
+                  <Badge variant="secondary">2 Upcoming</Badge>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
 
-      {/* GrampsAI Chat */}
-      <GrampsAI 
+      {/* Voice AI Companion */}
+      <VoiceCompanion 
         isOpen={isAIOpen} 
         onClose={() => setIsAIOpen(false)}
         isExpanded={isAIExpanded}
