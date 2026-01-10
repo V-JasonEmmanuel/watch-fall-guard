@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card monitor-card">
+    <h2>Fall Detection Monitor (Simulated CCTV)</h2>
+    <div class="video-container">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="output"></canvas>
+    </div>
+    <div id="status-panel">
+        <p>Status: <span id="monitor-status">Initializing AI...</span></p>
+        <button onclick="simulateFall()" class="btn btn-danger">Simulate Fall (Manual)</button>
+    </div>
+</div>
+
+<!-- Load MediaPipe Pose -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+
+<script>
+    const videoElement = document.getElementById('video');
+    const canvasElement = document.getElementById('output');
+    const canvasCtx = canvasElement.getContext('2d');
+    const statusSpan = document.getElementById('monitor-status');
+
+    let fallDetected = false;
+
+    function onResults(results) {
+        if (!results.poseLandmarks) return;
+
+        // Draw
+        canvasCtx.save();
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+        drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS,
+            { color: '#00FF00', lineWidth: 4 });
+        drawLandmarks(canvasCtx, results.poseLandmarks,
+            { color: '#FF0000', lineWidth: 2 });
+        canvasCtx.restore();
+
+        // Simple Fall Logic: Check if nose is too low (y-coordinate increase) suddenly or if horizontal orientation
+        // A robust fall detection needs temporal analysis.
+        // For demo: Check if nose.y > 0.8 (near bottom of screen) or checks width vs height of bounding box.
+
+        const nose = results.poseLandmarks[0];
+        const leftHip = results.poseLandmarks[23];
+        const rightHip = results.poseLandmarks[24];
+
+        // Example logic: if nose is lower than hips for sustained time? 
+        // Or if bounding box aspect ratio > 1 (laying down)
+
+        // Let's use a simple y-threshold for "Floor"
+        if (nose.y > 0.85 && !fallDetected) {
+            triggerFallAndAlert();
+        }
+
+        statusSpan.innerText = "Monitoring - Stable";
+    }
+
+    const pose = new Pose({
+        locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+        }
+    });
+
+    pose.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        enableSegmentation: false,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+    });
+
+    pose.onResults(onResults);
+
+    const camera = new Camera(videoElement, {
+        onFrame: async () => {
+            await pose.send({ image: videoElement });
+        },
+        width: 640,
+        height: 480
+    });
+
+    camera.start();
+
+    function triggerFallAndAlert() {
+        fallDetected = true;
+        statusSpan.innerText = "FALL DETECTED!";
+        statusSpan.style.color = "red";
+        alert("FALL DETECTED! Sending Alert...");
+
+        const token = localStorage.getItem('token');
+        fetch('/safety/alert/fall', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        }).then(res => res.json()).then(data => {
+            console.log(data);
+            setTimeout(() => { fallDetected = false; }, 5000); // Reset
+        });
+    }
+
+    function simulateFall() {
+        triggerFallAndAlert();
+    }
+</script>
+
+<style>
+    .video-container {
+        position: relative;
+        width: 640px;
+        height: 480px;
+        margin: 0 auto;
+        background: black;
+    }
+
+    video {
+        position: absolute;
+        width: 640px;
+        height: 480px;
+        display: none;
+        /* Hide raw video, show canvas */
+    }
+
+    canvas {
+        position: absolute;
+        width: 640px;
+        height: 480px;
+    }
+
+    .monitor-card {
+        text-align: center;
+    }
+
+    .btn-danger {
+        background-color: var(--danger);
+        color: white;
+        margin-top: 1rem;
+    }
+</style>
+{% endblock %}

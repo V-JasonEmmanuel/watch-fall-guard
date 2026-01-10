@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card video-card">
+    <h2>Video Call</h2>
+    <div class="video-grid">
+        <video id="remote-video" autoplay playsinline></video>
+        <video id="local-video" autoplay playsinline muted></video>
+    </div>
+
+    <div class="controls status-panel">
+        <p>My Peer ID: <strong id="my-peer-id">...</strong></p>
+        <div class="input-group">
+            <input type="text" id="remote-id" placeholder="Enter Peer ID to call">
+            <button onclick="makeCall()" class="btn btn-primary">Call</button>
+        </div>
+        <button onclick="endCall()" class="btn btn-danger" id="end-btn" style="display:none;">End Call</button>
+    </div>
+</div>
+
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<script>
+    const localVideo = document.getElementById('local-video');
+    const remoteVideo = document.getElementById('remote-video');
+    const myIdDisplay = document.getElementById('my-peer-id');
+    const remoteIdInput = document.getElementById('remote-id');
+    const endBtn = document.getElementById('end-btn');
+
+    let peer;
+    let currentCall;
+
+    // Initialize Peer (auto-generate ID for demo simplicity)
+    // In production, we would use user_id as peer_id
+    peer = new Peer();
+
+    peer.on('open', (id) => {
+        myIdDisplay.innerText = id;
+        console.log('My peer ID is: ' + id);
+    });
+
+    peer.on('call', (call) => {
+        // Answer automatically for demo
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
+            localVideo.srcObject = stream;
+            call.answer(stream); // Answer the call with an A/V stream.
+            currentCall = call;
+            endBtn.style.display = 'inline-block';
+
+            call.on('stream', (remoteStream) => {
+                remoteVideo.srcObject = remoteStream;
+            });
+        });
+    });
+
+    function makeCall() {
+        const remoteId = remoteIdInput.value;
+        if (!remoteId) return alert("Please enter a Peer ID");
+
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
+            localVideo.srcObject = stream;
+            const call = peer.call(remoteId, stream);
+            currentCall = call;
+            endBtn.style.display = 'inline-block';
+
+            call.on('stream', (remoteStream) => {
+                remoteVideo.srcObject = remoteStream;
+            });
+        });
+    }
+
+    function endCall() {
+        if (currentCall) {
+            currentCall.close();
+            endBtn.style.display = 'none';
+            remoteVideo.srcObject = null;
+        }
+    }
+</script>
+
+<style>
+    .video-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        position: relative;
+        background: black;
+        border-radius: var(--radius-lg);
+        height: 60vh;
+        overflow: hidden;
+    }
+
+    #remote-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    #local-video {
+        position: absolute;
+        bottom: 1rem;
+        right: 1rem;
+        width: 150px;
+        height: 100px;
+        object-fit: cover;
+        border: 2px solid white;
+        border-radius: var(--radius-md);
+    }
+
+    .status-panel {
+        margin-top: 1rem;
+        text-align: center;
+    }
+
+    .input-group {
+        margin-top: 0.5rem;
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+
+    .input-group input {
+        padding: 0.5rem;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--text-muted);
+    }
+</style>
+{% endblock %}

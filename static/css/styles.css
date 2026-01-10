@@ -1,0 +1,400 @@
+/* 
+   ElderGuard AI - Apple-Inspired Design System 
+   Theme: "Cupertino Clean"
+*/
+
+:root {
+    /* Apple Colors */
+    --ios-blue: #007AFF;
+    --ios-green: #34C759;
+    --ios-red: #FF3B30;
+    --ios-orange: #FF9500;
+    --ios-indigo: #5856D6;
+    --ios-gray: #8E8E93;
+
+    /* Backgrounds */
+    --bg-body: #F5F5F7;
+    /* Apple Light Grey */
+    --bg-card: #FFFFFF;
+    --bg-glass: rgba(255, 255, 255, 0.75);
+
+    /* Text */
+    --text-primary: #1D1D1F;
+    --text-secondary: #86868B;
+
+    /* Dimensions */
+    --radius-s: 12px;
+    --radius-m: 20px;
+    --radius-l: 32px;
+    /* Super rounded for Bento cards */
+
+    /* Shadows */
+    --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.06);
+    --shadow-float: 0 12px 32px rgba(0, 0, 0, 0.1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-body);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+}
+
+h1,
+h2,
+h3 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+}
+
+/* --- Navigation (Glass Bar) --- */
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: var(--bg-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.navbar nav a {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-left: 1.5rem;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.navbar nav a:hover {
+    color: var(--ios-blue);
+}
+
+/* --- Bento Grid Layouts --- */
+.container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.bento-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: minmax(180px, auto);
+    gap: 24px;
+}
+
+.bento-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-l);
+    padding: 24px;
+    box-shadow: var(--shadow-card);
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.bento-card:hover {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-float);
+}
+
+/* Card Sizes */
+.span-2 {
+    grid-column: span 2;
+}
+
+.span-4 {
+    grid-column: span 4;
+}
+
+.row-2 {
+    grid-row: span 2;
+}
+
+/* Typography inside Bento */
+.bento-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.bento-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.bento-icon {
+    font-size: 3rem;
+    margin-bottom: auto;
+    /* Push content down */
+}
+
+/* Specific Colors for Cards */
+.card-blue {
+    background: #E6F2FF;
+    color: var(--ios-blue);
+}
+
+.card-red {
+    background: #FFE5E5;
+    color: var(--ios-red);
+}
+
+.card-green {
+    background: #E5F9E7;
+    color: var(--ios-green);
+}
+
+/* --- Buttons --- */
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    border-radius: 99px;
+    font-weight: 600;
+    font-size: 1rem;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: var(--ios-blue);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0063CC;
+}
+
+.btn-secondary {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--ios-blue);
+}
+
+.btn-danger {
+    background: var(--ios-red);
+    color: white;
+}
+
+/* --- Hero Section --- */
+.hero {
+    text-align: center;
+    padding: 100px 20px;
+}
+
+.hero h1 {
+    font-size: 4rem;
+    /* Super big */
+    font-weight: 700;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #1D1D1F 0%, #434344 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero p {
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto 40px auto;
+}
+
+/* --- Forms --- */
+.form-control {
+    width: 100%;
+    padding: 16px;
+    background: var(--bg-body);
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    margin-bottom: 16px;
+}
+
+.form-control:focus {
+    outline: 2px solid var(--ios-blue);
+    background: white;
+}
+
+/* --- Scroll Animations --- */
+.reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* --- Long Landing Page Styles --- */
+.landing-section {
+    padding: 120px 20px;
+    max-width: 980px;
+    margin: 0 auto;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 80px;
+}
+
+.section-eyebrow {
+    color: var(--ios-blue);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+    display: block;
+}
+
+.section-heading {
+    font-size: 3.5rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+}
+
+/* Alternating Feature Rows */
+.feature-row {
+    display: flex;
+    align-items: center;
+    gap: 60px;
+    margin-bottom: 120px;
+}
+
+.feature-row.reverse {
+    flex-direction: row-reverse;
+}
+
+.feature-text {
+    flex: 1;
+}
+
+.feature-visual {
+    flex: 1;
+    background: white;
+    border-radius: var(--radius-l);
+    box-shadow: var(--shadow-float);
+    height: 400px;
+    /* Placeholder height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5rem;
+    color: var(--text-secondary);
+    position: relative;
+    overflow: hidden;
+}
+
+.feature-title {
+    font-size: 2.5rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.feature-desc {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* Tech Specs Grid */
+.specs-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+    text-align: center;
+}
+
+.spec-item h4 {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.spec-item p {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+}
+
+/* Testimonials */
+.testimonial-scroller {
+    display: flex;
+    gap: 30px;
+    overflow-x: auto;
+    padding-bottom: 40px;
+    scrollbar-width: none;
+    /* Hide scrollbar */
+}
+
+.testimonial-scroller::-webkit-scrollbar {
+    display: none;
+}
+
+.testimonial-card {
+    min-width: 350px;
+    background: white;
+    padding: 40px;
+    border-radius: var(--radius-m);
+    box-shadow: var(--shadow-card);
+}
+
+.quote {
+    font-size: 1.2rem;
+    font-style: italic;
+    margin-bottom: 20px;
+    color: var(--text-primary);
+}
+
+.author {
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+    .feature-row {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .feature-row.reverse {
+        flex-direction: column;
+    }
+
+    .section-heading {
+        font-size: 2.5rem;
+    }
+
+    .specs-grid {
+        grid-template-columns: 1fr;
+    }
+}

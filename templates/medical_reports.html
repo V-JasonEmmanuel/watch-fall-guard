@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container main-content">
+    <div class="header-row">
+        <button onclick="window.history.back()" class="btn btn-secondary">← Back</button>
+        <h2>Medical Records 📂</h2>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="card glass upload-card">
+        <h3>📄 Upload Patient History / Report</h3>
+        <p class="text-muted">Upload a photo or PDF of a doctor's report. Our AI will summarize it for you.</p>
+
+        <form id="uploadForm" class="upload-form">
+            <div class="form-group">
+                <input type="text" id="reportTitle" class="form-control"
+                    placeholder="Report Title (e.g., Blood Test, X-Ray)" required>
+            </div>
+            <div class="form-group grid-2">
+                <input type="text" id="doctorName" class="form-control" placeholder="Doctor's Name">
+                <select id="reportType" class="form-control">
+                    <option value="report">General Report</option>
+                    <option value="prescription">Prescription</option>
+                    <option value="scan">Scan/X-Ray</option>
+                </select>
+            </div>
+            <div class="file-drop-area" id="dropArea">
+                <span class="file-msg">Drag & Drop or Click to Upload</span>
+                <input type="file" id="fileInput" class="file-input" accept="image/*,.pdf" required>
+            </div>
+            <br>
+            <button type="submit" class="btn btn-primary btn-block">Analyze & Save</button>
+        </form>
+    </div>
+
+    <hr class="separator">
+
+    <!-- Reports List -->
+    <h3>Your History</h3>
+    <div id="reports-list" class="reports-grid">
+        <!-- Dynamic -->
+        <div class="card glass report-card">
+            <div class="loading-spinner"></div>
+            Loading records...
+        </div>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = '/login';
+
+    const uploadForm = document.getElementById('uploadForm');
+    const reportsList = document.getElementById('reports-list');
+    const fileInput = document.getElementById('fileInput');
+
+    // Fetch on Load
+    fetchReports();
+
+    uploadForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append('title', document.getElementById('reportTitle').value);
+        formData.append('doctor_name', document.getElementById('doctorName').value);
+        formData.append('report_type', document.getElementById('reportType').value);
+        formData.append('file', fileInput.files[0]);
+
+        const btn = uploadForm.querySelector('button');
+        const originalText = btn.innerText;
+        btn.innerText = "✨ AI Analysis in Progress...";
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('/medical/upload', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            if (res.ok) {
+                alert("Report Uploaded! AI has generated a summary.");
+                uploadForm.reset();
+                fetchReports();
+            } else {
+                alert("Upload failed.");
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    });
+
+    async function fetchReports() {
+        try {
+            const res = await fetch('/medical', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            renderReports(data);
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function renderReports(reports) {
+        reportsList.innerHTML = '';
+        if (reports.length === 0) {
+            reportsList.innerHTML = '<p class="text-muted text-center">No reports uploaded yet.</p>';
+            return;
+        }
+
+        reports.forEach(report => {
+            const date = new Date(report.upload_date).toLocaleDateString();
+            const icon = report.report_type === 'prescription' ? '💊' : (report.report_type === 'scan' ? '🦴' : '📄');
+
+            const html = `
+                <div class="card glass report-card">
+                    <div class="report-header">
+                        <div class="report-icon">${icon}</div>
+                        <div class="report-meta">
+                            <h4>${report.title}</h4>
+                            <p class="text-muted text-sm">${report.doctor_name || 'Unknown Doctor'} • ${date}</p>
+                        </div>
+                    </div>
+                    <div class="ai-summary-box">
+                        <span class="ai-badge">✨ AI Summary</span>
+                        <p>${report.summary}</p>
+                    </div>
+                    <div class="report-actions">
+                        <button class="btn btn-sm btn-secondary" onclick="alert('Viewing original file...')">View Original</button>
+                    </div>
+                </div>
+            `;
+            reportsList.innerHTML += html;
+        });
+    }
+</script>
+
+<style>
+    .header-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .upload-card {
+        margin-bottom: 2rem;
+        border: 2px dashed rgba(99, 102, 241, 0.3);
+    }
+
+    .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .file-drop-area {
+        position: relative;
+        padding: 2rem;
+        border: 2px dashed #ccc;
+        border-radius: 12px;
+        text-align: center;
+        background: rgba(255, 255, 255, 0.5);
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .file-drop-area:hover {
+        background: rgba(255, 255, 255, 0.8);
+        border-color: var(--primary);
+    }
+
+    .file-input {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .separator {
+        border: 0;
+        height: 1px;
+        background: rgba(0, 0, 0, 0.1);
+        margin: 2rem 0;
+    }
+
+    .reports-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .report-card {
+        transition: transform 0.2s;
+    }
+
+    .report-header {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .report-icon {
+        font-size: 2rem;
+        background: var(--bg-main);
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+
+    .ai-summary-box {
+        background: var(--gradient-bg);
+        padding: 1rem;
+        border-radius: 8px;
+        border-left: 4px solid var(--primary);
+        font-size: 0.95rem;
+        margin-bottom: 1rem;
+    }
+
+    .ai-badge {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        text-transform: uppercase;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .report-actions {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .btn-block {
+        width: 100%;
+    }
+</style>
+{% endblock %}

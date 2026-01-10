@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 32px;">
+        <button onclick="window.location.href='/dashboard'" class="btn btn-secondary" style="padding: 12px 20px;">
+            ← Back
+        </button>
+        <h2 style="margin: 0; font-size: 2rem;">Medications</h2>
+    </div>
+
+    <div class="bento-grid">
+        <!-- Add Medication Form -->
+        <div class="bento-card span-4">
+            <h3 class="bento-title">Add New Medication</h3>
+            <form id="medForm"
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 16px;">
+                <input type="text" id="medName" class="form-control" placeholder="Medicine Name" required
+                    style="margin: 0;">
+                <input type="text" id="medDosage" class="form-control" placeholder="Dosage (e.g., 500mg)" required
+                    style="margin: 0;">
+                <input type="time" id="medTime" class="form-control" required style="margin: 0;">
+                <button type="submit" class="btn btn-primary">Add Reminder</button>
+            </form>
+        </div>
+
+        <!-- Medicine List -->
+        <div class="bento-card span-4">
+            <h3 class="bento-title">Your Schedule</h3>
+            <div id="medList" style="margin-top: 20px;">
+                <p>Loading...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = '/login';
+
+    const medForm = document.getElementById('medForm');
+    const medList = document.getElementById('medList');
+
+    // Load Medications
+    fetchMeds();
+
+    medForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('medName').value;
+        const dosage = document.getElementById('medDosage').value;
+        const time = document.getElementById('medTime').value;
+
+        try {
+            const res = await fetch('/health/medications', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name, dosage, time })
+            });
+
+            if (res.ok) {
+                medForm.reset();
+                fetchMeds();
+            } else {
+                alert("Failed to add medication");
+            }
+        } catch (e) { console.error(e); }
+    });
+
+    async function fetchMeds() {
+        try {
+            const res = await fetch('/health/medications', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            renderMeds(data);
+        } catch (e) {
+            console.error(e);
+            medList.innerHTML = '<p>Error loading medications.</p>';
+        }
+    }
+
+    function renderMeds(meds) {
+        if (meds.length === 0) {
+            medList.innerHTML = '<p style="color: var(--text-secondary);">No medications added yet.</p>';
+            return;
+        }
+
+        medList.innerHTML = '';
+        meds.forEach(med => {
+            const div = document.createElement('div');
+            div.className = 'bento-card card-blue';
+            div.style.marginBottom = '16px';
+            div.style.flexDirection = 'row';
+            div.style.alignItems = 'center';
+            div.style.boxShadow = 'none';
+            div.style.background = '#F2F2F7'; // Lighter gray for list items
+
+            div.innerHTML = `
+                <div style="flex: 1;">
+                    <h4 style="font-size: 1.2rem; margin-bottom: 4px;">${med.name}</h4>
+                    <p style="color: var(--text-secondary);">${med.dosage} • ${med.time}</p>
+                </div>
+                <button onclick="deleteMed(${med.id})" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">❌</button>
+            `;
+            medList.appendChild(div);
+        });
+    }
+
+    async function deleteMed(id) {
+        if (!confirm("Remove this medication?")) return;
+
+        await fetch(`/health/medications/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        fetchMeds();
+    }
+</script>
+{% endblock %}

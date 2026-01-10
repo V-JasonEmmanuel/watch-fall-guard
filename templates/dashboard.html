@@ -1,0 +1,430 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <header style="margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end;">
+        <div>
+            <h1 style="font-size: 3rem; margin-bottom: 0;">Good Morning, <span class="user-name"
+                    style="color: var(--ios-blue);">Firstname</span></h1>
+            <p style="color: var(--text-secondary); font-size: 1.2rem;" id="current-date">Today</p>
+        </div>
+        <div>
+            <!-- Status Badge? -->
+        </div>
+    </header>
+
+    <!-- Elder Bento Grid -->
+    <div id="elder-view" class="bento-grid" style="display: none;">
+
+        <!-- Health Summary (Large) -->
+        <div class="bento-card span-2 card-blue">
+            <h3 class="bento-title">Health.</h3>
+            <div style="display: flex; gap: 32px; margin-top: 20px;">
+                <div>
+                    <div style="font-size: 3rem; font-weight: 700;">
+                        <span id="bpm-display">--</span> <span style="font-size: 1rem; font-weight: 500;">BPM</span>
+                    </div>
+                    <p style="opacity: 0.7;">Heart Rate</p>
+                </div>
+                <div>
+                    <div style="font-size: 3rem; font-weight: 700;">
+                        <span id="steps-display">--</span> <span style="font-size: 1rem; font-weight: 500;">Steps</span>
+                    </div>
+                    <p style="opacity: 0.7;">Daily Activity</p>
+                </div>
+            </div>
+            <div class="bento-icon"
+                style="position: absolute; bottom: -20px; right: -20px; font-size: 8rem; opacity: 0.2;">❤️</div>
+        </div>
+
+        <!-- SOS (Large Red) -->
+        <div class="bento-card span-2 card-red" onclick="triggerSOS()">
+            <div class="bento-icon">🚨</div>
+            <h3 class="bento-title">Emergency SOS.</h3>
+            <p class="bento-subtitle">Press to alert all contacts immediately.</p>
+        </div>
+
+        <!-- Call Family -->
+        <div class="bento-card" onclick="window.location.href='/videocall'">
+            <div class="bento-icon">📞</div>
+            <h3 class="bento-title">Call Family.</h3>
+        </div>
+
+        <!-- Medication (New Feature) -->
+        <div class="bento-card" onclick="window.location.href='/medications'">
+            <div class="bento-icon">💊</div>
+            <h3 class="bento-title">Meds.</h3>
+            <p class="bento-subtitle">View schedule.</p>
+        </div>
+
+        <!-- Fall Monitor -->
+        <div class="bento-card" onclick="window.location.href='/monitor'">
+            <div class="bento-icon">📸</div>
+            <h3 class="bento-title">Camera.</h3>
+            <p class="bento-subtitle">Fall Monitor.</p>
+        </div>
+
+        <!-- Companion -->
+        <div class="bento-card" onclick="window.location.href='/companion'">
+            <div class="bento-icon">🗣️</div>
+            <h3 class="bento-title">My AI.</h3>
+            <p class="bento-subtitle">Chat now.</p>
+        </div>
+
+        <!-- Medical Records -->
+        <div class="bento-card" onclick="window.location.href='/medical-records'">
+            <div class="bento-icon">📂</div>
+            <h3 class="bento-title">Records.</h3>
+            <p class="bento-subtitle">Reports.</p>
+        </div>
+
+        <!-- Patient Profile -->
+        <div class="bento-card" onclick="window.location.href='/patient-profile'">
+            <div class="bento-icon">🆔</div>
+            <h3 class="bento-title">Profile.</h3>
+            <p class="bento-subtitle">Details & Handling.</p>
+        </div>
+
+        <!-- Cognitive AI -->
+        <div class="bento-card span-2 card-green" onclick="window.location.href='/cognitive-health'">
+            <div class="bento-icon">🧠</div>
+            <h3 class="bento-title">Cognitive AI.</h3>
+            <p class="bento-subtitle">Behavior Analysis & Advice.</p>
+        </div>
+
+        <!-- Food Log -->
+        <div class="bento-card span-2" onclick="window.location.href='/nutrition'">
+            <div class="bento-icon">🍎</div>
+            <h3 class="bento-title">Nutrition.</h3>
+            <p class="bento-subtitle">Log your meals.</p>
+        </div>
+
+    </div>
+
+    <!-- Caregiver View -->
+    <div id="caregiver-view" style="display: none;">
+        <div class="bento-grid">
+            <div class="bento-card span-4">
+                <h3 class="bento-title">My Elders</h3>
+                <ul id="elder-list">
+                    <li>Loading...</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Set Date
+    const dateOptions = { weekday: 'long', month: 'long', day: 'numeric' };
+    document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', dateOptions);
+
+    // Auth Logic
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+
+    if (!token) {
+        window.location.href = '/login';
+    } else {
+        if (role === 'elder') {
+            document.getElementById('elder-view').style.display = 'grid';
+            fetchHealthStats();
+        } else {
+            document.getElementById('caregiver-view').style.display = 'block';
+        }
+        fetchProfile();
+    }
+
+    async function fetchProfile() {
+        try {
+            const res = await fetch('/profile/me', { headers: { 'Authorization': `Bearer ${token}` } });
+            if (res.ok) {
+                const user = await res.json();
+                document.querySelector('.user-name').innerText = user.full_name.split(' ')[0];
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    async function fetchHealthStats() {
+        try {
+            const res = await fetch('/health/stats', { headers: { 'Authorization': `Bearer ${token}` } });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.length > 0) {
+                    const latest = data[0];
+                    document.getElementById('bpm-display').innerText = latest.heart_rate || '--';
+                    document.getElementById('steps-display').innerText = latest.steps || '--';
+                }
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    function triggerSOS() {
+        alert("🚨 SOS SENT! Notifying family...");
+    }
+</script>
+
+<!-- Elder Dashboard -->
+<div id="elder-view" class="dashboard-view" style="display: none;">
+
+    <!-- Health Stats Row -->
+    <div class="stats-row">
+        <div class="card glass stat-card">
+            <div class="stat-icon">❤️</div>
+            <div class="stat-info">
+                <span class="stat-label">Heart Rate</span>
+                <span class="stat-value" id="bpm-display">--</span>
+                <span class="stat-unit">BPM</span>
+            </div>
+        </div>
+        <div class="card glass stat-card">
+            <div class="stat-icon">👣</div>
+            <div class="stat-info">
+                <span class="stat-label">Steps</span>
+                <span class="stat-value" id="steps-display">--</span>
+                <span class="stat-unit">steps</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="elder-grid">
+        <div class="card action-card sos-card" onclick="triggerSOS()">
+            <div class="icon-glow">🆘</div>
+            <h3>SOS Alert</h3>
+            <p>Emergency Help</p>
+        </div>
+
+        <div class="card action-card" onclick="window.location.href='/videocall'">
+            <div class="icon-glow">📞</div>
+            <h3>Call Family</h3>
+            <p>Video Connect</p>
+        </div>
+
+        <div class="card action-card" onclick="window.location.href='/companion'">
+            <div class="icon-glow">🤖</div>
+            <h3>Companion</h3>
+            <p>AI Chat & Help</p>
+        </div>
+
+        <div class="card action-card" onclick="window.location.href='/monitor'">
+            <div class="icon-glow">📸</div>
+            <h3>Fall Monitor</h3>
+            <p>Safety Camera</p>
+        </div>
+
+        <div class="card action-card" onclick="window.location.href='/location'">
+            <div class="icon-glow">📍</div>
+            <h3>Location</h3>
+            <p>Track & Map</p>
+        </div>
+
+        <div class="card action-card" onclick="window.location.href='/nutrition'">
+            <div class="icon-glow">🍎</div>
+            <h3>Food Log</h3>
+            <p>Nutrition AI</p>
+        </div>
+
+        <div class="card action-card" onclick="window.location.href='/medical-records'">
+            <div class="icon-glow">📂</div>
+            <h3>Records</h3>
+            <p>Docs & Reports</p>
+        </div>
+    </div>
+</div>
+
+<!-- Caregiver Dashboard -->
+<div id="caregiver-view" class="dashboard-view" style="display: none;">
+    <h2>Caregiver Portal</h2>
+    <div class="caregiver-grid">
+        <div class="card glass">
+            <h3>My Elders</h3>
+            <ul id="elder-list" class="list-unstyled">
+                <li>Loading...</li>
+            </ul>
+        </div>
+
+        <div class="card glass">
+            <h3>Recent Alerts</h3>
+            <ul id="alerts-list" class="list-unstyled">
+                <li class="alert-item">✅ System Normal</li>
+            </ul>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+    // Set Date
+    const dateOptions = { weekday: 'long', month: 'long', day: 'numeric' };
+    document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', dateOptions);
+
+    // Check Auth
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+
+    if (!token) {
+        window.location.href = '/login';
+    } else {
+        // Show appropriate view
+        if (role === 'elder') {
+            document.getElementById('elder-view').style.display = 'block';
+            fetchHealthStats();
+        } else {
+            document.getElementById('caregiver-view').style.display = 'block';
+        }
+
+        fetchProfile();
+    }
+
+    async function fetchProfile() {
+        try {
+            const res = await fetch('/profile/me', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const user = await res.json();
+                document.querySelector('.user-name').innerText = user.full_name.split(' ')[0]; // First name only
+            }
+        } catch (e) {
+            console.error("Failed to fetch profile", e);
+        }
+    }
+
+    async function fetchHealthStats() {
+        try {
+            const res = await fetch('/health/stats', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.length > 0) {
+                    const latest = data[0];
+                    document.getElementById('bpm-display').innerText = latest.heart_rate || '--';
+                    document.getElementById('steps-display').innerText = latest.steps || '--';
+                }
+            }
+        } catch (e) {
+            console.error("Failed to fetch stats", e);
+        }
+    }
+
+    function triggerSOS() {
+        alert("SOS TRIGGERED! Sending alerts to family...");
+    }
+</script>
+
+<style>
+    .dash-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 2rem;
+    }
+
+    .date-badge {
+        background: white;
+        padding: 0.5rem 1rem;
+        border-radius: 99px;
+        font-weight: 600;
+        color: var(--primary);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .stat-icon {
+        font-size: 2.5rem;
+        background: var(--bg-main);
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+
+    .stat-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        color: var(--text-main);
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    /* Grid */
+    .elder-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .action-card {
+        text-align: center;
+        padding: 2rem;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .icon-glow {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+    }
+
+    .sos-card {
+        background: var(--gradient-warm);
+        color: white;
+        grid-column: span 2;
+    }
+
+    .sos-card p {
+        opacity: 0.9;
+        color: white;
+    }
+
+    .caregiver-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+
+    @media (max-width: 768px) {
+        .sos-card {
+            grid-column: span 1;
+        }
+
+        .stats-row {
+            grid-template-columns: 1fr;
+        }
+
+        .caregiver-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}

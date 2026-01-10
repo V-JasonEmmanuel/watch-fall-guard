@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 32px;">
+        <button onclick="window.location.href='/dashboard'" class="btn btn-secondary" style="padding: 12px 20px;">
+            ← Back
+        </button>
+        <h2 style="margin: 0; font-size: 2rem;">Patient Profile</h2>
+    </div>
+
+    <!-- Personal Info Card -->
+    <div class="bento-grid">
+        <div class="bento-card span-2">
+            <h3 class="bento-title">Personal Details</h3>
+            <form id="profileForm" style="margin-top: 16px;">
+                <label>Full Name</label>
+                <input type="text" id="fullName" class="form-control" disabled>
+
+                <div style="display: flex; gap: 16px;">
+                    <div style="flex: 1;">
+                        <label>Age</label>
+                        <input type="number" id="age" class="form-control">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Blood Type</label>
+                        <select id="bloodType" class="form-control">
+                            <option value="">Select</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                        </select>
+                    </div>
+                </div>
+
+                <label>Emergency Contact (Phone)</label>
+                <input type="text" id="phone" class="form-control">
+
+                <button type="submit" class="btn btn-primary" style="margin-top: 16px;">Save Changes</button>
+            </form>
+        </div>
+
+        <!-- Medical & Handling -->
+        <div class="bento-card span-2 card-blue">
+            <h3 class="bento-title">Medical Context</h3>
+            <form id="medicalForm" style="margin-top: 16px;">
+                <label>Medical Conditions</label>
+                <textarea id="conditions" class="form-control" rows="2"
+                    placeholder="e.g. Diabetes, Hypertension"></textarea>
+
+                <label>Handling Instructions</label>
+                <textarea id="instructions" class="form-control" rows="4"
+                    placeholder="e.g. Needs assistance with stairs. Speak clearly and slowly."></textarea>
+
+                <button type="submit" class="btn btn-primary" style="margin-top: 16px;">Update Medical Info</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = '/login';
+
+    // Load Data
+    fetchProfile();
+
+    async function fetchProfile() {
+        try {
+            const res = await fetch('/profile/me', { headers: { 'Authorization': `Bearer ${token}` } });
+            const user = await res.json();
+
+            document.getElementById('fullName').value = user.full_name;
+            document.getElementById('age').value = user.age || '';
+            document.getElementById('bloodType').value = user.blood_type || '';
+            document.getElementById('phone').value = user.phone_number || '';
+            document.getElementById('conditions').value = user.medical_conditions || '';
+            document.getElementById('instructions').value = user.handling_instructions || '';
+        } catch (e) { console.error(e); }
+    }
+
+    // Save Handlers (Merging into one update function for simplicity)
+    const saveForms = async (e) => {
+        e.preventDefault();
+        const data = {
+            age: document.getElementById('age').value,
+            blood_type: document.getElementById('bloodType').value,
+            phone_number: document.getElementById('phone').value,
+            medical_conditions: document.getElementById('conditions').value,
+            handling_instructions: document.getElementById('instructions').value
+        };
+
+        try {
+            const res = await fetch('/profile/me', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) alert("Profile Updated Successfully");
+        } catch (e) { console.error(e); }
+    };
+
+    document.getElementById('profileForm').addEventListener('submit', saveForms);
+    document.getElementById('medicalForm').addEventListener('submit', saveForms);
+</script>
+{% endblock %}

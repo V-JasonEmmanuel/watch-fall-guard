@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elder Care Platform</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700&display=swap"
+        rel="stylesheet">
+    <!-- CSS -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
+</head>
+
+<body>
+    <div id="app">
+        <header class="navbar">
+            <div class="logo">ElderGuard AI</div>
+            <nav>
+                <a href="/dashboard" id="nav-dashboard" style="display: none;">Dashboard</a>
+                <a href="/login" id="nav-login">Login</a>
+                <a href="/signup" id="nav-signup">Sign Up</a>
+                <a href="#" id="nav-logout" style="display: none;" onclick="logout()">Logout</a>
+            </nav>
+        </header>
+
+        <script>
+            // Simple Auth Check for Navbar
+            const navToken = localStorage.getItem('token');
+            if (navToken) {
+                document.getElementById('nav-dashboard').style.display = 'inline-block';
+                document.getElementById('nav-logout').style.display = 'inline-block';
+                document.getElementById('nav-login').style.display = 'none';
+                document.getElementById('nav-signup').style.display = 'none';
+            }
+
+            function logout() {
+                localStorage.removeItem('token');
+                localStorage.removeItem('role');
+                window.location.href = '/';
+            }
+        </script>
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    <script src="/static/js/main.js"></script>
+</body>
+
+</html>

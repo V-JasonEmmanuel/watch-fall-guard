@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card companion-card">
+    <div class="avatar-container">
+        <div class="avatar-circle">🤖</div>
+    </div>
+    <h2>AI Companion</h2>
+    <p id="status-text">Touch the microphone to speak...</p>
+
+    <div class="conversation-log" id="chat-log">
+        <!-- Chat history -->
+    </div>
+
+    <button id="mic-btn" class="mic-btn" onclick="toggleListening()">
+        🎤
+    </button>
+</div>
+
+<script>
+    const micBtn = document.getElementById('mic-btn');
+    const statusText = document.getElementById('status-text');
+    const chatLog = document.getElementById('chat-log');
+
+    let isListening = false;
+    let recognition;
+
+    if ('webkitSpeechRecognition' in window) {
+        recognition = new webkitSpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = () => {
+            isListening = true;
+            micBtn.classList.add('listening');
+            statusText.innerText = "Listening...";
+        };
+
+        recognition.onend = () => {
+            isListening = false;
+            micBtn.classList.remove('listening');
+            statusText.innerText = "Processing...";
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            addMessage(transcript, 'user');
+            processResponse(transcript);
+        };
+    } else {
+        alert("Speech Recognition not supported in this browser. Please use Chrome.");
+    }
+
+    function toggleListening() {
+        if (isListening) {
+            recognition.stop();
+        } else {
+            recognition.start();
+        }
+    }
+
+    function addMessage(text, sender) {
+        const div = document.createElement('div');
+        div.className = `message ${sender}`;
+        div.innerText = text;
+        chatLog.appendChild(div);
+        chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    async function processResponse(text) {
+        // Mock AI Response - In real app call Backend LLM
+        // Checking for keywords
+        let response = "I am here for you. How can I help?";
+
+        const lower = text.toLowerCase();
+        if (lower.includes("hello") || lower.includes("hi")) {
+            response = "Hello! How are you feeling today?";
+        } else if (lower.includes("sad") || lower.includes("lonely")) {
+            response = "I'm sorry to hear that. I'm here to chat. Would you like to hear a joke or call your family?";
+        } else if (lower.includes("emergency") || lower.includes("help")) {
+            response = "I am alerting your caregivers immediately.";
+            // Trigger SOS API
+        } else if (lower.includes("medicine")) {
+            response = "Let me check your schedule. You have Vitamin D at 2 PM.";
+        }
+
+        addMessage(response, 'bot');
+        speak(response);
+        statusText.innerText = "Touch to speak";
+    }
+
+    function speak(text) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.9; // Slower for elders
+        utterance.pitch = 1.0;
+        window.speechSynthesis.speak(utterance);
+    }
+</script>
+
+<style>
+    .companion-card {
+        text-align: center;
+        height: 70vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .avatar-circle {
+        width: 100px;
+        height: 100px;
+        background: var(--primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        margin: 0 auto 1rem;
+        color: white;
+    }
+
+    .mic-btn {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: none;
+        background: var(--secondary);
+        color: white;
+        font-size: 2rem;
+        cursor: pointer;
+        margin: 0 auto;
+        transition: transform 0.2s;
+        box-shadow: var(--shadow-md);
+    }
+
+    .mic-btn.listening {
+        background: var(--danger);
+        animation: pulse 1.5s infinite;
+    }
+
+    .conversation-log {
+        flex-grow: 1;
+        overflow-y: auto;
+        border: 1px solid var(--text-muted);
+        border-radius: var(--radius-md);
+        margin: 1rem 0;
+        padding: 1rem;
+        background: #f1f5f9;
+    }
+
+    .message {
+        padding: 0.5rem 1rem;
+        border-radius: 1rem;
+        margin-bottom: 0.5rem;
+        max-width: 80%;
+        text-align: left;
+    }
+
+    .user {
+        background: var(--primary);
+        color: white;
+        margin-left: auto;
+        border-bottom-right-radius: 0;
+    }
+
+    .bot {
+        background: white;
+        border: 1px solid var(--text-muted);
+        margin-right: auto;
+        border-bottom-left-radius: 0;
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.1);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+</style>
+{% endblock %}

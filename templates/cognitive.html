@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 32px;">
+        <button onclick="window.location.href='/dashboard'" class="btn btn-secondary" style="padding: 12px 20px;">
+            ← Back
+        </button>
+        <h2 style="margin: 0; font-size: 2rem;">Cognitive Health AI 🧠</h2>
+    </div>
+
+    <div class="bento-grid">
+        <!-- AI Analysis Results -->
+        <div class="bento-card span-4 card-green" id="analysisCard" style="display: none;">
+            <div style="display: flex; gap: 24px; align-items: flex-start;">
+                <div style="font-size: 4rem;">🤖</div>
+                <div style="flex: 1;">
+                    <h3 class="bento-title">AI Analysis Result</h3>
+                    <div style="display: flex; align-items: baseline; gap: 16px; margin-bottom: 16px;">
+                        <h2 style="font-size: 2.5rem; margin: 0;" id="stageTitle">Normal Aging</h2>
+                        <span class="status-pill" id="riskScore">Low Risk</span>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.6); padding: 20px; border-radius: 16px;">
+                        <h4 style="margin-bottom: 12px;">Handling Advice:</h4>
+                        <ul id="adviceList" style="padding-left: 20px; font-size: 1.1rem; line-height: 1.6;">
+                            <!-- Dynamic -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Log Behavior -->
+        <div class="bento-card span-2">
+            <h3 class="bento-title">Log Observation</h3>
+            <p class="text-secondary">Record unusual behaviors to help the AI detect patterns.</p>
+            <form id="logForm" style="margin-top: 16px;">
+                <textarea id="desc" class="form-control" rows="3"
+                    placeholder="e.g., Forgot where they put the keys, repeated same question." required></textarea>
+                <label>Severity</label>
+                <select id="severity" class="form-control">
+                    <option value="Low">Low - Minor lapse</option>
+                    <option value="Medium">Medium - Noticeable confusion</option>
+                    <option value="High">High - Safety concern</option>
+                </select>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Log Behavior</button>
+            </form>
+        </div>
+
+        <!-- Recent Logs -->
+        <div class="bento-card span-2">
+            <h3 class="bento-title">Recent Logs</h3>
+            <div id="logsList" style="margin-top: 16px; max-height: 300px; overflow-y: auto;">
+                <p>Loading...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = '/login';
+
+    const logForm = document.getElementById('logForm');
+
+    // Init
+    fetchLogs();
+    analyzeHealth();
+
+    logForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const desc = document.getElementById('desc').value;
+        const severity = document.getElementById('severity').value;
+
+        try {
+            const res = await fetch('/cognitive/log', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ description: desc, severity: severity })
+            });
+
+            if (res.ok) {
+                logForm.reset();
+                fetchLogs();
+                analyzeHealth(); // Re-analyze on new data
+            }
+        } catch (e) { console.error(e); }
+    });
+
+    async function fetchLogs() {
+        const res = await fetch('/cognitive/logs', { headers: { 'Authorization': `Bearer ${token}` } });
+        const logs = await res.json();
+
+        const list = document.getElementById('logsList');
+        list.innerHTML = '';
+
+        if (logs.length === 0) {
+            list.innerHTML = '<p class="text-secondary">No logs yet.</p>';
+            return;
+        }
+
+        logs.forEach(log => {
+            const date = new Date(log.timestamp).toLocaleDateString();
+            list.innerHTML += `
+                <div style="margin-bottom: 12px; padding: 12px; background: #F2F2F7; border-radius: 12px;">
+                    <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 4px;">${date} • ${log.severity} Priority</div>
+                    <div>${log.description}</div>
+                </div>
+            `;
+        });
+    }
+
+    async function analyzeHealth() {
+        const res = await fetch('/cognitive/analyze', { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+
+        const card = document.getElementById('analysisCard');
+        card.style.display = 'block';
+
+        document.getElementById('stageTitle').innerText = data.stage;
+        document.getElementById('riskScore').innerText = `Risk Score: ${data.score}/100`;
+
+        const adviceList = document.getElementById('adviceList');
+        adviceList.innerHTML = '';
+        data.advice.forEach(item => {
+            adviceList.innerHTML += `<li>${item}</li>`;
+        });
+
+        // Color coding
+        if (data.score > 50) {
+            card.classList.remove('card-green'); // Reset
+            card.style.background = '#FFE5E5'; // Red tint
+            if (data.score < 80) card.style.background = '#FFF4E5'; // Orange tint
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- 1. Hero Section -->
+<section class="hero" style="padding: 160px 20px 120px 20px;">
+    <div class="reveal">
+        <h1 style="max-width: 900px; margin: 0 auto 24px auto;">The Future of Elder Care is Here.</h1>
+        <p style="font-size: 1.7rem; max-width: 700px; margin: 0 auto 48px auto;">
+            Intelligence that protects. Design that empowers. <br>
+            Peace of mind for the entire family.
+        </p>
+
+        <div style="display: flex; gap: 16px; justify-content: center;">
+            <a href="/signup" class="btn btn-primary" style="padding: 16px 40px; font-size: 1.1rem;">Start Free
+                Trial</a>
+            <button onclick="skipLogin()" class="btn btn-secondary" style="padding: 16px 40px; font-size: 1.1rem;">View
+                Demo</button>
+        </div>
+    </div>
+</section>
+
+<!-- 2. The Problem (Emotional Hook) -->
+<section class="landing-section">
+    <div class="section-header reveal">
+        <span class="section-eyebrow">The Challenge</span>
+        <h2 class="section-heading">Aging shouldn't mean<br>losing independence.</h2>
+    </div>
+    <div class="reveal"
+        style="text-align: center; max-width: 700px; margin: 0 auto; font-size: 1.3rem; color: var(--text-secondary);">
+        <p>Every year, millions of seniors face falls, health scares, and loneliness. Traditional solutions are clunky,
+            intrusive, and stigmatizing. We built something different. Something beautiful.</p>
+    </div>
+</section>
+
+<!-- 3. The Technology (Feature Rows) -->
+<section class="landing-section">
+    <div class="section-header reveal">
+        <span class="section-eyebrow">Advanced Technology</span>
+        <h2 class="section-heading">Proactive Protection.</h2>
+    </div>
+
+    <!-- Feature 1: Fall Detection -->
+    <div class="feature-row reveal">
+        <div class="feature-text">
+            <div class="bento-icon" style="color: var(--ios-red); margin-bottom: 20px;">🚨</div>
+            <h3 class="feature-title">Instant Fall Detection.</h3>
+            <p class="feature-desc">
+                Using advanced computer vision via standard cameras, WatchGuard identifies falls in real-time. No
+                wearables required. It instantly notifies family members and emergency services via WhatsApp with the
+                exact location.
+            </p>
+        </div>
+        <div class="feature-visual" style="background: #FFF5F5;">
+            <!-- Simple Abstract Visual -->
+            <div style="text-align: center;">
+                <div style="font-size: 1.5rem; color: var(--ios-red); font-weight: 700; margin-bottom: 10px;">99.8%
+                </div>
+                <div style="font-size: 1rem;">Accuracy</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature 2: Health Monitoring -->
+    <div class="feature-row reverse reveal">
+        <div class="feature-text">
+            <div class="bento-icon" style="color: var(--ios-blue); margin-bottom: 20px;">❤️</div>
+            <h3 class="feature-title">Vitals at a Glance.</h3>
+            <p class="feature-desc">
+                Seamlessly syncs with popular smartwatches. Track heart rate, sleep quality, and daily steps. Our AI
+                analyzes trends to predict potential health issues before they become emergencies.
+            </p>
+        </div>
+        <div class="feature-visual" style="background: #F0F8FF;">
+            <div style="text-align: center;">
+                <div style="font-size: 1.5rem; color: var(--ios-blue); font-weight: 700; margin-bottom: 10px;">24/7
+                </div>
+                <div style="font-size: 1rem;">Monitoring</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature 3: Cognitive AI -->
+    <div class="feature-row reveal">
+        <div class="feature-text">
+            <div class="bento-icon" style="color: var(--ios-indigo); margin-bottom: 20px;">🧠</div>
+            <h3 class="feature-title">Cognitive Guardian.</h3>
+            <p class="feature-desc">
+                Our new Agentic AI analyzes behavioral patterns to detect early signs of cognitive decline. It provides
+                tailored advice for caregivers and handled instructions to ensure the best care for every stage.
+            </p>
+        </div>
+        <div class="feature-visual" style="background: #F5F3FF;">
+            <div style="text-align: center;">
+                <div style="font-size: 1.5rem; color: var(--ios-indigo); font-weight: 700; margin-bottom: 10px;">AI
+                </div>
+                <div style="font-size: 1rem;">Analysis</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 4. Safety Specs -->
+<section class="landing-section"
+    style="background: white; border-radius: var(--radius-l); padding: 80px; margin-bottom: 120px;">
+    <div class="section-header reveal">
+        <span class="section-eyebrow">By The Numbers</span>
+        <h2 class="section-heading">Engineered for Trust.</h2>
+    </div>
+    <div class="specs-grid reveal">
+        <div class="spec-item">
+            <h4 class="text-gradient">
+                < 0.5s</h4>
+                    <p>Alert Latency</p>
+        </div>
+        <div class="spec-item">
+            <h4 class="text-gradient">AES-256</h4>
+            <p>Data Encryption</p>
+        </div>
+        <div class="spec-item">
+            <h4 class="text-gradient">10k+</h4>
+            <p>Families Protected</p>
+        </div>
+    </div>
+</section>
+
+<!-- 5. Testimonials -->
+<section class="landing-section">
+    <div class="section-header reveal">
+        <span class="section-eyebrow">Stories</span>
+        <h2 class="section-heading">Loved by Families.</h2>
+    </div>
+    <div class="testimonial-scroller reveal">
+        <div class="testimonial-card">
+            <p class="quote">"It saved my dad's life. The fall alert was instant, and we got to him in time. I can't
+                imagine life without it."</p>
+            <p class="author">— Sarah Jenkins, California</p>
+        </div>
+        <div class="testimonial-card">
+            <p class="quote">"The UI is so simple, even my 85-year-old mom loves using the iPad app. It's just beautiful
+                and reassuring."</p>
+            <p class="author">— Mark Daley, London</p>
+        </div>
+        <div class="testimonial-card">
+            <p class="quote">"The AI Companion is a game changer. It keeps my grandfather engaged and reminds him of his
+                meds."</p>
+            <p class="author">— Priya Patel, Toronto</p>
+        </div>
+    </div>
+</section>
+
+<!-- 6. Footer CTA -->
+<section class="hero" style="background: #1D1D1F; color: white; margin-top: 0; padding: 120px 20px;">
+    <h2 style="color: white; margin-bottom: 24px;">Ready to upgrade your care?</h2>
+    <p style="color: #86868B; margin-bottom: 40px;">Join thousands of families trusting ElderGuard today.</p>
+    <a href="/signup" class="btn btn-primary" style="padding: 16px 48px;">Get Started</a>
+</section>
+
+<script>
+    function skipLogin() {
+        localStorage.setItem('token', 'demo-token');
+        localStorage.setItem('role', 'elder');
+        window.location.href = '/dashboard';
+    }
+
+    // Scroll Reveal Animation with IntersectionObserver
+    document.addEventListener('DOMContentLoaded', () => {
+        const reveals = document.querySelectorAll('.reveal');
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                    observer.unobserve(entry.target); // Only animate once
+                }
+            });
+        }, {
+            threshold: 0.1
+        });
+
+        reveals.forEach(el => observer.observe(el));
+    });
+</script>
+{% endblock %}

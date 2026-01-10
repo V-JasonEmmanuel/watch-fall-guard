@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card nutrition-card">
+    <h2>Food & Nutrition</h2>
+    <div class="upload-section">
+        <label for="meal-upload" class="upload-btn">
+            📸 Snap / Upload Meal
+        </label>
+        <input type="file" id="meal-upload" accept="image/*" style="display: none;">
+    </div>
+
+    <div id="preview-area" class="preview-area"></div>
+
+    <div id="ai-analysis" class="ai-analysis" style="display: none;">
+        <h3>AI Analysis</h3>
+        <p><strong>Predicted:</strong> <span id="food-name">Loading...</span></p>
+        <p><strong>Calories:</strong> <span id="calories">...</span></p>
+        <p class="suggestion" id="suggestion">...</p>
+    </div>
+</div>
+
+<script>
+    document.getElementById('meal-upload').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.maxWidth = "100%";
+                img.style.borderRadius = "var(--radius-md)";
+                document.getElementById('preview-area').innerHTML = '';
+                document.getElementById('preview-area').appendChild(img);
+
+                // Simulate AI Analysis
+                simulateAnalysis();
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function simulateAnalysis() {
+        document.getElementById('ai-analysis').style.display = 'block';
+        document.getElementById('food-name').innerText = "Analyzing...";
+
+        setTimeout(() => {
+            document.getElementById('food-name').innerText = "Oatmeal with Berries";
+            document.getElementById('calories').innerText = "~150 kcal";
+            document.getElementById('suggestion').innerText = "✅ Excellent choice! Heart-healthy and good for digestion.";
+        }, 1500);
+    }
+</script>
+
+<style>
+    .upload-btn {
+        display: block;
+        width: 100%;
+        padding: 1rem;
+        background: var(--primary);
+        color: white;
+        text-align: center;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+
+    .preview-area {
+        margin-bottom: 1rem;
+        text-align: center;
+        max-height: 300px;
+        overflow: hidden;
+    }
+
+    .ai-analysis {
+        background: #f0fdf4;
+        /* Light green */
+        padding: 1rem;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--success);
+    }
+</style>
+{% endblock %}
