@@ -44,5 +44,5 @@ def send_emergency_alert(user_name: str, contacts: list, location: str = "Unknow
         # Assuming contact is a dict {name, phone, relation}
         phone = contact.get('phone')
         if phone:
-            msg = f"SOS ALERT! {user_name} needs help. Location: {location}. Please check the ElderGuard App immediately."
+            msg = f"SOS ALERT! {user_name} needs help. Location: {location}. Please check the ElderEase App immediately."
             send_whatsapp_message(phone, msg)
